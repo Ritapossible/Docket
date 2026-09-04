@@ -31,3 +31,16 @@ jobs:
       # This fails the build if spec/THREAT-MODEL.md claims coverage no test backs.
       - name: Threat-model coverage
         run: bash script/check-threat-coverage.sh
+
+  sdk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Typecheck
+        working-directory: sdk
+        run: npm install --no-audit --no-fund && npx tsc -p tsconfig.json --noEmit

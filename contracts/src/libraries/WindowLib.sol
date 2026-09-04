@@ -14,7 +14,13 @@ pragma solidity 0.8.26;
 ///      one-second timestamp resolution cannot express "at most 30 acts per second", which is
 ///      exactly the regime this contract exists to police.
 library WindowLib {
-    uint16 internal constant MAX_BUCKETS = 64;
+    /// @dev 16, not 64. A window's eviction cost is O(buckets crossed), and an act declaring
+    ///      several assets whose windows have all gone stale pays that for each of them. At 64
+    ///      buckets the compound worst case measured 1.33M gas (bench/RESULTS.md); at 16 it is
+    ///      a quarter of that. Bucket count only sets how smoothly the window slides — 16
+    ///      buckets over an hour is 3m45s of resolution, which is ample for a spending cap and
+    ///      not worth a megagas spike.
+    uint16 internal constant MAX_BUCKETS = 16;
 
     struct Window {
         uint32 bucketDuration; // ticks per bucket
@@ -22,7 +28,7 @@ library WindowLib {
         uint16 cursor; // index of the bucket currently being filled
         uint32 cursorStart; // tick at which the bucket under `cursor` began
         uint128 total; // sum of live buckets
-        uint128[64] buckets;
+        uint128[16] buckets;
     }
 
     error BadWindowConfig();

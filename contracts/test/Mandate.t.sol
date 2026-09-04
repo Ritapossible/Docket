@@ -273,7 +273,7 @@ contract MandateTest is Base {
             perActionCap: 1 ether, // stricter
             windowCap: 1 ether, // stricter
             windowDuration: 600, // but reshapes
-            windowBuckets: 30
+            windowBuckets: 12
         });
 
         vm.prank(owner);
@@ -425,7 +425,7 @@ contract MandateTest is Base {
                 perActionCap: 1 ether,
                 windowCap: 5 ether,
                 windowDuration: 3600,
-                windowBuckets: 30
+                windowBuckets: 12
             })
         );
         vm.stopPrank();

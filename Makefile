@@ -27,5 +27,19 @@ gas:
 snapshot:
 	forge snapshot --snap bench/gas.snapshot
 
+sdk-abi:
+	@python3 -c "import json,pathlib; a=json.load(open('contracts/out/Mandate.sol/Mandate.json'))['abi']; \
+pathlib.Path('sdk/src/abi.ts').write_text('// Generated from contracts/out/Mandate.sol/Mandate.json - regenerate with \`make sdk-abi\`.\n' \
+'// The event set is the product public API (ARCHITECTURE.md 3.9); regenerating after an\n' \
+'// event signature change is what keeps the SDK, the indexer and DCS-1 in step.\n\n' \
+'export const mandateAbi = ' + json.dumps(a, indent=2) + ' as const;\n')"
+	@echo "wrote sdk/src/abi.ts"
+
+sdk-check:
+	cd sdk && npm ci --silent && npx tsc -p tsconfig.json --noEmit
+
+blockrate:
+	./bench/blockrate.sh
+
 clean:
 	forge clean

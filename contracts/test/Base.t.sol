@@ -37,7 +37,7 @@ abstract contract Base is Test {
             expiry: 0,
             rateCap: 10,
             rateWindow: 200, // blocks; ~60s at 300ms
-            rateBuckets: 20,
+            rateBuckets: 10,
             slippageBps: 0,
             mode: Mode.Enforce
         });
@@ -56,7 +56,7 @@ abstract contract Base is Test {
                 perActionCap: NATIVE_PER_ACTION,
                 windowCap: NATIVE_WINDOW,
                 windowDuration: 3600,
-                windowBuckets: 30
+                windowBuckets: 12
             })
         );
         mandate.tightenAsset(
@@ -66,7 +66,7 @@ abstract contract Base is Test {
                 perActionCap: TOKEN_PER_ACTION,
                 windowCap: TOKEN_WINDOW,
                 windowDuration: 3600,
-                windowBuckets: 30
+                windowBuckets: 12
             })
         );
         vm.stopPrank();

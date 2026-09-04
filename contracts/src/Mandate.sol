@@ -27,9 +27,10 @@ contract Mandate {
     using WindowLib for WindowLib.Window;
     using PolicyLib for Policy;
 
-    /// @dev Provisional. ARCHITECTURE.md §9 requires this be set from the week-2 benchmark:
-    ///      the balance assertion costs a balance read per tracked asset per act, so there is
-    ///      a real ceiling past which the guard costs more than the action it guards.
+    /// @dev Measured, not guessed. The balance assertion costs a flat 3,372 gas per tracked
+    ///      asset with no cliff (bench/RESULTS.md §2), so this bounds the loop rather than
+    ///      dodging a limit. It also bounds `declared`, since every declared asset must be
+    ///      tracked — which is what keeps the multi-asset worst case finite.
     uint256 public constant MAX_TRACKED_ASSETS = 16;
 
     uint64 public constant MIN_LOOSEN_DELAY = 10 minutes;
@@ -324,15 +325,23 @@ contract Mandate {
         return 0;
     }
 
+    /// @dev Skips the asset the call is addressed to: calling a token directly (`transfer`)
+    ///      spends the mandate's own balance and needs no allowance, and the set-call-zero pair
+    ///      is the single most expensive item in a multi-asset act (bench/RESULTS.md). The
+    ///      balance assertion still bounds that leg, so nothing is given up by not approving.
     function _grantApprovals(Action calldata a, address spender) private {
         for (uint256 i = 0; i < a.declared.length; i++) {
-            _approve(a.declared[i].asset, spender, a.declared[i].amount);
+            address asset = a.declared[i].asset;
+            if (asset == spender) continue;
+            _approve(asset, spender, a.declared[i].amount);
         }
     }
 
     function _revokeApprovals(Action calldata a, address spender) private {
         for (uint256 i = 0; i < a.declared.length; i++) {
-            _approve(a.declared[i].asset, spender, 0);
+            address asset = a.declared[i].asset;
+            if (asset == spender) continue;
+            _approve(asset, spender, 0);
         }
     }
 

@@ -23,7 +23,7 @@ contract Deploy is Script {
             expiry: 0,
             rateCap: 30, // 30 acts per ~60s of blocks
             rateWindow: 200, // blocks; ~60s at 300ms
-            rateBuckets: 20,
+            rateBuckets: 10,
             slippageBps: 0,
             mode: Mode.Observe // arm it deliberately, per ARCHITECTURE §3.8
         });
@@ -42,7 +42,7 @@ contract Deploy is Script {
                 perActionCap: 0.5 ether,
                 windowCap: 5 ether,
                 windowDuration: 3600,
-                windowBuckets: 30
+                windowBuckets: 12
             })
         );
 
