@@ -49,5 +49,11 @@ score:
 blockrate:
 	./bench/blockrate.sh
 
+demo:
+	./demo/run.sh
+
+demo-twice:
+	RUNS=2 ./demo/run.sh
+
 clean:
 	forge clean

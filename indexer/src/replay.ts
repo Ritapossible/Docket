@@ -45,7 +45,12 @@ export async function replay(
   mandate: Address,
   options: {fromBlock: bigint; asOfBlock?: bigint; chunkSize?: bigint} = {fromBlock: 0n},
 ): Promise<ReplayResult> {
-  const asOfBlock = options.asOfBlock ?? (await client.getBlockNumber());
+  // cacheTime: 0 is load-bearing. viem caches getBlockNumber for its polling interval by
+  // default, so a replay run moments after a transaction lands can silently score a stale view
+  // of the chain and omit the newest block. That would make two honest indexers publish
+  // different scores for the same mandate depending on cache timing — the exact failure DCS-1
+  // exists to rule out.
+  const asOfBlock = options.asOfBlock ?? (await client.getBlockNumber({cacheTime: 0}));
   const fromBlock = options.fromBlock;
 
   // Public RPCs cap eth_getLogs by block range — Monad's testnet endpoint allows 100 — so the

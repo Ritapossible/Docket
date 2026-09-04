@@ -67,3 +67,25 @@ jobs:
       - name: DCS-1 conformance
         working-directory: indexer
         run: node --experimental-strip-types --test test/*.test.ts
+
+  demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      # The demo beat is an integration test that happens to be readable: it deploys a real
+      # mandate, gets prompt-injected, and fails the build if the refusal does not hold or does
+      # not reach the score.
+      - name: End-to-end beat
+        run: RUNS=2 ./demo/run.sh

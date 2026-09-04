@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "description": "Client for Docket mandates. Turns a policy refusal into a thrown error, because the contract does not revert on one.",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src"
+  ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {

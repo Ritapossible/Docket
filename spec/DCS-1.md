@@ -171,6 +171,11 @@ either reproduces the published number byte-identically or fails loudly. A DCS-1
 cannot be reproduced is not a low score; it is a broken publisher, and it should be treated as
 such.
 
+A verifier must also read the chain **uncached**. Clients commonly cache the head block number
+for their polling interval, and a replay run moments after a transaction lands will then score
+the chain as it was before it — producing a different, honestly-derived, wrong answer. The
+reference implementation passes `cacheTime: 0`; any other implementation must do the equivalent.
+
 `--from` is required rather than defaulted to genesis. Public RPCs cap `eth_getLogs` by block
 range, so a verifier needs the mandate's deployment block to start from; it is published as
 ERC-8004 metadata under `docket:deployBlock`.

@@ -204,3 +204,25 @@ test("inputHash is order-independent in input but order-dependent in meaning", a
   // But a different event set must hash differently.
   assert.notEqual(inputHash([a]), inputHash([a, b]));
 });
+
+test("a stale asOf block silently changes the score, which is why replay disables caching", () => {
+  // Regression note for the bug found by running demo/beat.ts against a live chain: viem
+  // caches getBlockNumber, so a replay moments after a denial landed scored the chain as it
+  // was before it. The scorer itself is honest — given the truncated history it returns the
+  // pre-denial number — which is precisely why the truncation had to be fixed upstream.
+  const asOf = 1_800_000_000n;
+  const base = {
+    allowedActs: 3n,
+    firstActTime: asOf - 1n,
+    asOfTime: asOf,
+    capSegments: [{cap: 5n * 10n ** 18n, durationSeconds: 3601n}],
+  };
+  const withoutDenial = score(history(base));
+  const withDenial = score(
+    history({...base, denials: [{rule: "TargetNotAllowed", timestamp: asOf}]}),
+  );
+
+  assert.equal(withoutDenial.score, 331);
+  assert.equal(withDenial.score, 218);
+  assert.equal(withDenial.breachPpm, 340_000n);
+});

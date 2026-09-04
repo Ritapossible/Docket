@@ -1,0 +1,19 @@
+{
+  "name": "docket",
+  "private": true,
+  "type": "module",
+  "description": "An AI agent's reputation, computed from what a contract actually let it do.",
+  "scripts": {
+    "demo": "node --experimental-strip-types demo/beat.ts",
+    "typecheck": "tsc -p sdk/tsconfig.json --noEmit && tsc -p indexer/tsconfig.json --noEmit",
+    "test:dcs1": "node --experimental-strip-types --test indexer/test/*.test.ts"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT"
+}

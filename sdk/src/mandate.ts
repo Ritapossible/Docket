@@ -7,8 +7,8 @@ import {
   type WalletClient,
 } from "viem";
 
-import {mandateAbi} from "./abi";
-import {DeniedError, TargetFailedError, toRule, type Rule} from "./errors";
+import {mandateAbi} from "./abi.ts";
+import {DeniedError, TargetFailedError, toRule, type Rule} from "./errors.ts";
 
 export interface Outflow {
   asset: Address;
