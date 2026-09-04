@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Format
+        run: forge fmt --check
+
+      - name: Build
+        run: forge build --sizes
+
+      - name: Test
+        run: forge test -vvv
+
+      # A threat-model row may not be marked covered until a test names its ID.
+      # This fails the build if spec/THREAT-MODEL.md claims coverage no test backs.
+      - name: Threat-model coverage
+        run: bash script/check-threat-coverage.sh

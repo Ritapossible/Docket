@@ -1,0 +1,25 @@
+[profile.default]
+src = "contracts/src"
+test = "contracts/test"
+out = "contracts/out"
+libs = ["contracts/lib"]
+solc_version = "0.8.26"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 20_000
+via_ir = false
+bytecode_hash = "none"
+fs_permissions = [{ access = "read", path = "./spec" }]
+
+[fmt]
+line_length = 110
+tab_width = 4
+bracket_spacing = false
+int_types = "long"
+
+[profile.ci]
+verbosity = 2
+fuzz = { runs = 2048 }
+
+[rpc_endpoints]
+monad_testnet = "${MONAD_TESTNET_RPC}"
