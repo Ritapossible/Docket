@@ -1,0 +1,20 @@
+{
+  "name": "@docket/indexer",
+  "version": "0.1.0",
+  "description": "Deterministic replay of a Docket mandate's events, and the DCS-1 reference implementation.",
+  "type": "module",
+  "bin": {"docket": "src/cli.ts"},
+  "scripts": {
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "score": "node --experimental-strip-types src/cli.ts"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  },
+  "license": "MIT"
+}

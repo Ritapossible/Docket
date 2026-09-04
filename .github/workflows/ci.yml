@@ -44,3 +44,26 @@ jobs:
       - name: Typecheck
         working-directory: sdk
         run: npm install --no-audit --no-fund && npx tsc -p tsconfig.json --noEmit
+
+  indexer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        working-directory: indexer
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        working-directory: indexer
+        run: npx tsc -p tsconfig.json --noEmit
+
+      # Vectors are hand-computed from spec/DCS-1.md, so this checks the implementation
+      # against the spec rather than against itself.
+      - name: DCS-1 conformance
+        working-directory: indexer
+        run: node --experimental-strip-types --test test/*.test.ts

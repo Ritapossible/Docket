@@ -33,10 +33,18 @@ pathlib.Path('sdk/src/abi.ts').write_text('// Generated from contracts/out/Manda
 '// The event set is the product public API (ARCHITECTURE.md 3.9); regenerating after an\n' \
 '// event signature change is what keeps the SDK, the indexer and DCS-1 in step.\n\n' \
 'export const mandateAbi = ' + json.dumps(a, indent=2) + ' as const;\n')"
-	@echo "wrote sdk/src/abi.ts"
+	@cp sdk/src/abi.ts indexer/src/abi.ts
+	@echo "wrote sdk/src/abi.ts and indexer/src/abi.ts"
 
 sdk-check:
-	cd sdk && npm ci --silent && npx tsc -p tsconfig.json --noEmit
+	cd sdk && npm install --silent --no-audit --no-fund && npx tsc -p tsconfig.json --noEmit
+
+indexer-check:
+	cd indexer && npm install --silent --no-audit --no-fund && npx tsc -p tsconfig.json --noEmit
+	cd indexer && node --experimental-strip-types --test test/*.test.ts
+
+score:
+	cd indexer && node --experimental-strip-types src/cli.ts score $(MANDATE) --from $(FROM)
 
 blockrate:
 	./bench/blockrate.sh
