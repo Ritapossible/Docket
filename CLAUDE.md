@@ -59,6 +59,8 @@ write-up, and drift between them is expensive.
 - **Deploy to Monad testnet every week.** Dated on-chain deployments are part of the submission
   evidence, not just a convenience.
 - **Commits are small, daily, and describe the why.** The commit history is read by judges.
+- **Check `forge build --sizes`, not the gas report's "Deployment Size".** They are different
+  numbers, and confusing them once already hid a contract that was over the EIP-170 limit.
 
 ## What not to add
 
@@ -80,7 +82,7 @@ changed, not a fresh preference.
 ```
 ARCHITECTURE.md   design contract: invariants, contracts, off-chain, threat model
 PLAN.md           week-by-week schedule, definition of done, cut list, risk register
-contracts/        Foundry. Mandate, MandateFactory, policy and window libraries
+contracts/        Foundry. Mandate, policy and window libraries
 sdk/              TypeScript + viem. act(), DeniedError, agent tool-shim
 indexer/          deterministic replay, DCS-1 reference implementation, verify CLI
 console/          Next.js. live stream, limits, replay, "not protected from" panel

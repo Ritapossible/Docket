@@ -4,10 +4,9 @@ pragma solidity 0.8.26;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {Mandate} from "../contracts/src/Mandate.sol";
-import {MandateFactory} from "../contracts/src/MandateFactory.sol";
 import {AssetPolicy, Mode, Policy} from "../contracts/src/libraries/Types.sol";
 
-/// @notice Deploys a factory and one example mandate to Monad testnet.
+/// @notice Deploys one example mandate to Monad testnet.
 /// @dev PLAN.md week 0: a contract that has only ever run in `forge test` is not a working
 ///      product, and the submission requires demonstrably in-window work. Every dated
 ///      deployment is evidence.
@@ -31,8 +30,10 @@ contract Deploy is Script {
 
         vm.startBroadcast(pk);
 
-        MandateFactory factory = new MandateFactory();
-        Mandate mandate = factory.deploy(owner, agent, guardian, 1 hours, policy, bytes32(block.timestamp));
+        // Deployed directly. There is no factory: one that used `new` would have to embed
+        // Mandate's whole initcode and could never fit under EIP-170 (bench/RESULTS.md).
+        // Discovery comes from the MandateDeployed event in Mandate's own constructor.
+        Mandate mandate = new Mandate(owner, agent, guardian, 1 hours, policy);
 
         mandate.tightenAsset(
             address(0),
@@ -47,7 +48,6 @@ contract Deploy is Script {
 
         vm.stopBroadcast();
 
-        console.log("factory  ", address(factory));
         console.log("mandate  ", address(mandate));
         console.log("owner    ", owner);
         console.log("agent    ", agent);

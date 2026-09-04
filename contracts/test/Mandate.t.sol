@@ -414,7 +414,7 @@ contract MandateTest is Base {
     function test_observeModeRecordsWouldDenyAndStillExecutes() public {
         Policy memory p = _policy();
         p.mode = Mode.Observe;
-        Mandate observed = factory.deploy(owner, agent, guardian, LOOSEN_DELAY, p, bytes32(uint256(99)));
+        Mandate observed = new Mandate(owner, agent, guardian, LOOSEN_DELAY, p);
         vm.deal(address(observed), 10 ether);
 
         vm.startPrank(owner);

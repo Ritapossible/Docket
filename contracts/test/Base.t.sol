@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {Mandate} from "../src/Mandate.sol";
-import {MandateFactory} from "../src/MandateFactory.sol";
 import {Action, AssetPolicy, Mode, Outflow, Policy, Rule} from "../src/libraries/Types.sol";
 import {MockERC20} from "./mocks/MockERC20.sol";
 import {MaliciousTarget} from "./mocks/MaliciousTarget.sol";
@@ -13,7 +12,6 @@ import {MaliciousTarget} from "./mocks/MaliciousTarget.sol";
 ///      references its ID and the CI check greps for exactly that.
 abstract contract Base is Test {
     Mandate internal mandate;
-    MandateFactory internal factory;
     MockERC20 internal token;
     MaliciousTarget internal evil;
 
@@ -33,7 +31,6 @@ abstract contract Base is Test {
         vm.warp(1_800_000_000);
         vm.roll(1_000_000);
 
-        factory = new MandateFactory();
         token = new MockERC20();
 
         Policy memory p = Policy({
@@ -45,7 +42,7 @@ abstract contract Base is Test {
             mode: Mode.Enforce
         });
 
-        mandate = factory.deploy(owner, agent, guardian, LOOSEN_DELAY, p, bytes32(uint256(1)));
+        mandate = new Mandate(owner, agent, guardian, LOOSEN_DELAY, p);
         evil = new MaliciousTarget(address(token), attacker);
 
         vm.deal(address(mandate), 100 ether);

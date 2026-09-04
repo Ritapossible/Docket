@@ -92,11 +92,19 @@ Solidity `0.8.26`, Foundry, no proxies. Mandates are immutable once deployed; up
 deploying a new mandate and migrating funds, which is a deliberate constraint — an upgradeable
 guard is not a guard.
 
-### 3.1 `MandateFactory`
+### 3.1 Deployment and discovery — no factory
 
-CREATE2 deployment, one mandate per (owner, salt). Emits `MandateDeployed(mandate, owner,
-agent, policyHash)`. Holds no funds and no privileges. Its only job is to make mandates
-discoverable to the indexer and address-predictable to the SDK.
+There is no factory contract, and this is a measured decision rather than a preference. A
+factory that instantiates with `new` must embed the whole of `Mandate`'s initcode; at 24,032 B
+that puts any such factory over the EIP-170 runtime limit, where it deploys fine in tests and
+reverts on a real chain. See `bench/RESULTS.md` for the measurement and the three options
+considered.
+
+Instead `Mandate` emits `MandateDeployed(owner, agent, guardian, policyHash)` from its own
+constructor, and the indexer discovers mandates by filtering that topic across all addresses.
+CREATE2 determinism, where it is wanted, comes from the standard deployer. This also removes a
+registry slot that every deployment would have written — the kind of shared state I4 exists to
+keep out of the system.
 
 ### 3.2 `Mandate`
 
@@ -419,7 +427,7 @@ Stated here so it is stated somewhere other than a judge's question.
 ## 8. Repository layout
 
 ```
-contracts/   Foundry. Mandate, MandateFactory, policy library, window library.
+contracts/   Foundry. Mandate, policy library, window library.
 sdk/         TypeScript + viem. act(), DeniedError, policy authoring, agent tool-shim.
 indexer/     Deterministic replay, DCS-1 reference implementation, verify CLI.
 console/     Next.js. Live stream, limits, replay, "not protected from" panel.
@@ -442,3 +450,6 @@ Resolve by the date given; a decision recorded here beats a decision rediscovere
 - **Relayed and sponsored `act()`** (deferred to v2). v1 requires the agent to hold gas and call
   directly. EIP-712 signatures plus a nonce would allow relaying, and add replay surface.
 - **ERC-8004 revision drift.** The standard is a draft. Pin it, and re-check before submission.
+- **`Mandate` size headroom.** 2,340 B under EIP-170 as of week 1. Week 3 adds ERC-8004
+  publication to this contract; if that headroom runs out, the owner-facing policy mutators
+  split into a module before anything else is cut.

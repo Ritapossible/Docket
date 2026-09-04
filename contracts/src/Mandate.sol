@@ -107,6 +107,9 @@ contract Mandate {
     event Unpaused();
     event KeyRotated(address indexed from, address indexed to, uint32 epoch);
     event GuardianSet(address indexed guardian);
+    event MandateDeployed(
+        address indexed owner, address indexed agent, address indexed guardian, bytes32 policyHash
+    );
     event Deposited(address indexed from, uint256 amount);
     event Withdrawn(address indexed asset, address indexed to, uint256 amount);
 
@@ -159,6 +162,10 @@ contract Mandate {
         loosenDelay = loosenDelay_;
         policy = policy_;
         _configureRateWindow(policy_);
+        // Discovery without a registry: the indexer filters this topic across all addresses.
+        // A factory that deployed mandates with `new` would have to embed the whole initcode
+        // and could never fit under EIP-170 — see bench/RESULTS.md.
+        emit MandateDeployed(owner_, agent_, guardian_, keccak256(abi.encode(policy_)));
     }
 
     receive() external payable {
