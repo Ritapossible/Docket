@@ -465,3 +465,117 @@ Resolve by the date given; a decision recorded here beats a decision rediscovere
 - **`Mandate` size headroom.** 2,340 B under EIP-170 as of week 1. Week 3 adds ERC-8004
   publication to this contract; if that headroom runs out, the owner-facing policy mutators
   split into a module before anything else is cut.
+
+---
+
+## 10. Production-readiness gaps
+
+Written after building the first working version end to end. These are defects and missing
+engineering controls, not wishes. The ones marked **BLOCKER** must close before the testnet
+deployment: they either fail on a real chain or make the deployment unverifiable.
+
+### 10.1 The console re-reads all history on every poll - BLOCKER
+
+`useMandate` calls `replay()` from `fromBlock` every two seconds, and `replay()` walks the whole
+range in 100-block chunks because that is Monad's `eth_getLogs` cap. The cost grows with the
+mandate's age:
+
+| Mandate age | Blocks | `getLogs` per replay | Requests/sec while the page is open |
+| --- | --- | --- | --- |
+| 1 hour | 11,726 | 117 | 59 |
+| 1 day | 281,433 | 2,814 | 1,407 |
+| 1 week | 1,970,033 | 19,700 | 9,850 |
+| 5.5 weeks | 10,835,179 | 108,352 | 54,176 |
+
+At 307ms blocks this is unusable within a day and absurd within a week. It never showed up
+locally because an anvil chain is ten blocks long.
+
+It also collides with the plan's strongest move. DCS-1's age term cannot be accelerated, so a
+mandate deployed early and left running is the one advantage no competitor can retro-fit - and
+under this design, the longer it runs the more completely the console breaks.
+
+**Fix: incremental sync.** Hold a cursor and the accumulated history in state; on each poll query
+only `(lastSyncedBlock, head]`, fold new events into the existing totals, and re-derive the score
+from the fold. The initial load still costs a full walk, so it needs a progress indicator and a
+higher chunk size where the RPC allows one. Reorgs are the wrinkle: Monad has single-slot
+finality, so a small confirmation lag - sync to `head - N` and re-scan the last N blocks each
+poll - is sufficient and much cheaper than tracking reorgs properly.
+
+The `docket score` CLI is fine as it is: one full walk for a one-shot verification is correct,
+and it is the operation that must be reproducible from scratch.
+
+### 10.2 No stateful invariant testing
+
+The 32 tests assert specific scenarios. A contract whose entire job is to hold a bound under
+adversarial sequencing needs properties that survive arbitrary call orderings, which is what
+Foundry's invariant testing is for. Candidates, in the order they are worth writing:
+
+1. A `Denied` act changes no balance, no window total and no policy field.
+2. The vault's outflow over any sequence never exceeds the sum of declared outflows of the acts
+   that were allowed, plus slippage.
+3. No policy field is ever loosened without a `LoosenQueued` at least `loosenDelay` old.
+4. `trackedAssets` and `_trackedIndex` stay mutually consistent under arbitrary track/untrack
+   sequences - the swap-and-pop in `_setAssetPolicy` is the kind of code that is right until it
+   is not.
+5. `act()` never reverts on a policy violation. Already fuzzed; promote it to an invariant so it
+   holds under sequences rather than single calls.
+
+### 10.3 No static analysis
+
+Slither or Aderyn in CI, with findings triaged rather than suppressed wholesale. For a contract
+presented as a security product, shipping without having run the standard tools is difficult to
+defend, and the tools are free.
+
+### 10.4 No gas or coverage gate
+
+`bench/RESULTS.md` records gas but nothing fails when it regresses. `forge snapshot --check`
+turns the recorded numbers into a gate. `forge coverage` with a floor on `contracts/src` would
+catch a branch that no test reaches - the balance assertion's slippage path is the obvious
+candidate.
+
+### 10.5 Deployment provenance
+
+`Deploy.s.sol` prints addresses to stdout, which means the submission's claims about what is
+running are unverifiable. Commit `deployments/<network>.json` carrying the address, deploy block,
+transaction hash, constructor arguments, the commit SHA it was built from, and the explorer link
+after source verification. A judge should be able to go from the repo to the running contract
+without asking.
+
+### 10.6 The SDK cannot be installed
+
+`sdk/` uses `.ts` import specifiers with `noEmit`, which works in-repo and nowhere else. Anyone
+running `npm i @docket/sdk` gets a package Node cannot load. It needs a build that emits `.js`
+with `.js` specifiers. This was a deliberate trade to let the demo drive the real SDK rather than
+a copy, and it is the right trade for a hackathon and the wrong one for a package.
+
+### 10.7 Console resilience
+
+Three gaps, each cheap:
+
+- **No error boundary.** A throw inside a component blanks the page with no explanation.
+- **No staleness signal.** If the RPC starts failing, the console keeps showing the last good
+  state and the "live" pill keeps saying live. It should show the last synced block and go
+  visibly stale.
+- **No retry.** A single 429 or a dropped connection surfaces as a hard error. Public RPCs rate
+  limit; retry with backoff and surface the wait.
+
+### 10.8 Accessibility
+
+Contrast is measured and the act states are distinguished by text as well as colour, which is
+the hard part done. Missing: `aria-live="polite"` on the act stream so a new refusal is
+announced, a skip link past the masthead, `:focus-visible` styles on the nav and controls, and a
+`prefers-reduced-motion` guard before any animation is added.
+
+### 10.9 Migration procedure
+
+Mandates are immutable by design, so migration is a real operational procedure and it is not
+written down anywhere. It should be: pause the old mandate, withdraw, deploy the new one, fund
+it, re-point the agent key, and register the new mandate under the same ERC-8004 identity so the
+record is continuous. That last step is the one that needs thought - if migration resets the
+history, the age term resets with it, and the anti-sybil story quietly dies.
+
+### 10.10 Secrets and demo keys
+
+`demo/beat.ts` uses anvil's well-known deterministic keys. They are public and must never touch a
+funded network. The deploy script reads from the environment, which is right; what is missing is
+a CI check that no key material is committed, and a line in the README saying so plainly.

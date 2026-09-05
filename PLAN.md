@@ -178,6 +178,8 @@ the project. Everything above them is presentation.
 | ERC-8004 draft changes under us | week 3 | pin the revision in `spec/ERC8004.md` and re-check on 10 Oct |
 | "Isn't this just a Safe module?" from a judge | pre-emptive | one rehearsed line: *no permission system treats the refused attempt as a public artifact, and none are built to run inline with an agent acting thirty times a second* |
 | Scope creep via U2 | any week-3 work on pools | §5 item 2 already decided it; execute the cut |
+| Console unusable once the mandate has real history | any testnet session slower than local | incremental sync (§9 item 2) is a prerequisite for the deployment, not a follow-up |
+| Age clock never started | no testnet deploy by 6 Sep | the advantage is unrecoverable after the fact; deploy in Observe mode with a throwaway policy rather than waiting for a finished one |
 | Solo-builder illness or a lost week | any missed exit criterion | the §5 order is the recovery plan; cut two items and hold the date |
 
 ---
@@ -207,3 +209,108 @@ Infrastructure. Do not revisit this.
 - [ ] Testnet addresses for factory, an example mandate, and the ERC-8004 entries
 - [ ] `docket score --verify` walkthrough a judge can run in under five minutes
 - [ ] Limits stated in the write-up, not only in the repo
+
+---
+
+## 9. Work queue, revised 5 September
+
+Weeks 0-4 landed: the gate, the guarantee, DCS-1, the indexer, the demo beat and the console.
+What follows re-orders the remaining work by what actually decides the outcome, and it is
+ordered - start at the top and do not skip.
+
+Each item names its exit criterion. `ARCHITECTURE.md` §10 carries the technical detail.
+
+### P0 - blocks everything else
+
+**1. Deploy to Monad testnet and start the age clock.** *(needs a funded key and an agent
+address)*
+
+This is one task doing three jobs, which is why it outranks everything. It produces the
+act-to-finality latency numbers that §2's "this needs Monad" argument currently lacks. It moves
+the project out of greenfield-demo territory. And it starts the one clock that cannot be
+rewound: DCS-1's age term saturates at 180 days and no amount of money or cleverness accelerates
+it, so a mandate deployed tonight and left running until 13 October submits five and a half
+weeks of real aged history that no competitor can retro-fit. **Every day this waits is a day of
+that advantage destroyed, permanently.**
+
+Deploy in `Observe` mode, arm it once the false-denial rate is known.
+
+> **Exit:** a funded mandate live on testnet; `deployments/monad-testnet.json` committed; a
+> scripted agent transacting against it on a schedule; first latency figures in `bench/`.
+
+**2. Incremental sync in the console.** *(no external dependency - do this first if the key is
+not ready)*
+
+A hard blocker for item 1, and the two are on a collision course: the console re-walks all
+history every two seconds, so a day-old mandate needs 1,407 requests/second and a week-old one
+needs 9,850. The strategy that makes the project strong is the same thing that breaks the UI.
+
+> **Exit:** the console holds a cursor and queries only new blocks; a mandate with a week of
+> synthetic history loads and stays live without rate-limiting.
+
+### P1 - high impact, cheap, no blockers
+
+**3. Answer "isn't this a Safe module?" in the first fifteen seconds.** Prior art is dense and
+the denial-as-artifact distinction is subtle. It belongs in the README's opening lines, the
+console hero and the first slide of the demo video, not in minute three.
+
+> **Exit:** one sentence, in all three places, that a stranger can repeat back.
+
+**4. Deployment provenance** (§10.5). Addresses, deploy block, tx, constructor args, commit SHA,
+verified explorer link, committed.
+
+> **Exit:** a judge can go from the repo to the running contract without asking a question.
+
+**5. Console resilience** (§10.7): error boundary, staleness indicator, RPC retry with backoff.
+
+> **Exit:** killing the RPC mid-session shows a clear stale state rather than a blank page or a
+> confident lie.
+
+**6. `LICENSE` and `SECURITY.md`.** `package.json` claims MIT and no licence file exists. A
+security product with no disclosure policy is a bad look for the sake of ten minutes.
+
+**7. Accessibility pass** (§10.8): `aria-live` on the act stream, skip link, `:focus-visible`,
+`prefers-reduced-motion`.
+
+### P2 - the professional bar for a security product
+
+**8. Stateful invariant tests** (§10.2). Unit tests assert scenarios; a guard needs properties
+that survive arbitrary orderings. Five candidates are listed in the architecture, ranked. The
+swap-and-pop in `_setAssetPolicy` is the one most likely to be hiding something.
+
+> **Exit:** invariants run in CI with a meaningful call depth, and at least one found a bug or
+> is documented as having found none after a real campaign.
+
+**9. Static analysis** (§10.3). Slither or Aderyn in CI, findings triaged in writing.
+
+**10. Gas and coverage gates** (§10.4). `forge snapshot --check` and a coverage floor, so
+`bench/RESULTS.md` becomes a contract rather than a snapshot.
+
+**11. Underwriting, thin** (the U2 idea). One bond pool, the team as sole underwriter, the
+premium as the only number the owner sees. A score is something a judge argues with; a price is
+a market, and it answers sybil economically rather than by assertion. Attempt only if 1-10 are
+clean.
+
+### P3 - if there is time, and there will not be
+
+12. SDK packaging so it is installable (§10.6).
+13. Migration procedure written down (§10.9).
+14. Differential TS/Solidity policy evaluator - the oracle form, cut in week 5.
+15. Secrets check in CI (§10.10).
+
+### What has been cut and stays cut
+
+The cut list in §5 stands. ERC-8004's validation registry is not deployed on Monad, so that cut
+was made for us. Policy replay and natural-language authoring remain cut; the `Policy` struct
+stays hand-written.
+
+### The honest read on where this stands
+
+Strong on the patterns that decide sponsor-track outcomes: alignment with the host chain, a
+bounded-authority mechanism that adds a rung rather than repeating one, a negative-capability
+claim, honest limits shipped inside the product. Weak in exactly one place that matters, and it
+is item 1: the central claim that this design needs Monad is currently an argument rather than a
+measurement, and the vault's clearest matched pair turned on precisely that distinction.
+
+Aim at winning the track. The cross-track grand prize rarely goes to infrastructure with no
+users, and pretending otherwise would distort the remaining decisions.

@@ -90,6 +90,16 @@ spec/             DCS-1.md, THREAT-MODEL.md, POLICY.md, ERC8004.md
 bench/            load harness and published results
 ```
 
+## Where to start a new session
+
+`PLAN.md` §9 is the ordered work queue, revised 5 September. Start at the top of it. Items 1 and
+2 are blockers and item 1 is time-sensitive in a way nothing else here is: DCS-1's age term
+cannot be accelerated, so the mandate has to be live and accruing history as early as possible.
+
+`ARCHITECTURE.md` §10 has the technical detail behind each item, including the console's
+full-history re-read, which must be fixed before or alongside the testnet deployment rather than
+after it.
+
 ## Working rules
 
 - **Consult `PLAN.md` §5 before adding scope.** The cut list is ordered in advance so that
@@ -98,6 +108,9 @@ bench/            load harness and published results
 - **Honest limits ship in the product.** The console renders the uncovered threat-model rows.
   Naming a weakness before a judge finds it converts it into evidence of rigour; hiding one
   converts it into the thing they remember.
+- **Prefer a measurement to an argument.** The project's central claim is that this design needs
+  Monad. Until act-to-finality latency is measured on testnet, that claim is prose, and prose is
+  what the vault's clearest matched pair lost on.
 - **The demo beat is the priority ordering.** Injection → on-chain refusal → console shows the
   rule → a counterparty refuses the agent. Work that does not serve that beat or the guarantee
   behind it is negotiable, whatever else it has going for it.
