@@ -53,20 +53,23 @@ a { color: inherit; }
 
 /* ── Header ─────────────────────────────────────────────────────────── */
 
+/* HOUSE RULE: never use the `padding` shorthand on an element that also carries `.shell`.
+   Both are single classes, so whichever rule comes later wins outright, and the shorthand
+   silently resets the inline padding `.shell` exists to provide. Use padding-block. */
 .masthead {
-  padding-block: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 28px 0 20px;
+  padding-block: 26px 20px;
   flex-wrap: wrap;
 }
 
 .wordmark {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
+  min-width: 0;
   font-family: var(--display);
   font-weight: 700;
   font-size: 26px;
@@ -444,10 +447,16 @@ footer {
   /* The masthead stacks: wordmark on its own line, nav below it as a wrapping row. Four
      letterspaced mono links do not fit beside a wordmark at this width, and shrinking them
      until they do makes them unreadable. */
-  .masthead { flex-direction: column; align-items: flex-start; gap: 14px; padding: 22px 0 4px; }
-  .masthead nav { gap: 14px 18px; }
-  .navlink { font-size: 11px; letter-spacing: 0.12em; }
-  .wordmark { font-size: 23px; }
+  .masthead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding-block: 20px 4px;
+  }
+  .masthead nav { gap: 12px 16px; }
+  .navlink { font-size: 11px; letter-spacing: 0.1em; }
+  .wordmark { font-size: 22px; gap: 9px; }
+  .wordmark svg { width: 26px; height: 26px; }
 
   .panel-body { padding: 18px; }
   .panel-head { padding: 16px 18px; }
@@ -464,6 +473,8 @@ footer {
 }
 
 @media (max-width: 380px) {
+  .navlink { font-size: 10.5px; letter-spacing: 0.06em; }
+  .masthead nav { gap: 10px 14px; }
   .act { grid-template-columns: 1fr; }
   .act-block { grid-column: 1; }
   .verdict { font-size: 11px; }

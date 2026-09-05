@@ -81,6 +81,19 @@ It is a marketing page; this is an operating console. Two additions, both delibe
 - **Density.** Marketing sections breathe; a live event stream cannot. Stream rows use tighter
   spacing and the mono scale, while the narrative sections keep the reference's rhythm.
 
+## The mark
+
+A dot held inside a pair of brackets: something contained by bounds it cannot leave. It lives in
+`console/src/components/Logo.tsx` and the favicon in `index.html` is the same geometry inline, so
+the two cannot drift.
+
+Two earlier attempts were discarded for the same reason, which is worth recording because it is
+the trap in icon design. An arrow descending onto a bar was meant to read as "stopped"; it reads
+as the download glyph, everywhere, whatever it was meant to say. Three stacked bars would have
+read as a hamburger menu sitting directly above a nav. **A mark competes with every glyph the
+viewer already knows, and it loses.** Brackets are unusual enough not to collide, and they
+happen to mean the right thing.
+
 ## Typefaces
 
 Vendored, not CDN-loaded. `console/scripts/vendor-fonts.mjs` downloads the latin subsets into
@@ -106,6 +119,13 @@ values that simply exceed a small viewport: a `white-space: nowrap` metadata col
 `flex-basis: 340px` input, and a `min-width: 260px` set inline on the score bars. The fix for
 the last one was to move the layout out of an inline style and into CSS, where a breakpoint can
 reach it.
+
+**House rule: never use the `padding` shorthand on an element that also carries `.shell`.** Both
+are single classes, so the later rule wins outright and the shorthand silently resets the inline
+padding `.shell` exists to provide. This bug shipped twice - once in the base `.masthead` rule
+and once in the mobile override - and both times it was invisible on desktop, because the
+`max-width` centering supplies an inset that hides the missing padding. On a phone there is
+nothing else providing it and the content sits flush against the edge. Use `padding-block`.
 
 Below 560px the masthead stacks - wordmark on its own line, nav wrapping beneath it. Four
 letterspaced mono links do not fit beside a wordmark at that width, and shrinking them until

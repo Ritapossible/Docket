@@ -3,6 +3,7 @@ import {useMemo, useState} from "react";
 import {ActStream} from "./components/ActStream.tsx";
 import {Connect} from "./components/Connect.tsx";
 import {Governance} from "./components/Governance.tsx";
+import {Logo} from "./components/Logo.tsx";
 import {Ladder} from "./components/Ladder.tsx";
 import {ScorePanel} from "./components/ScorePanel.tsx";
 import {Eyebrow, Panel, Stat} from "./components/Sections.tsx";
@@ -22,7 +23,10 @@ export function App() {
     <>
       <header className="shell masthead">
         <a className="wordmark" href="/">
-          Docket<em>&nbsp;console</em>
+          <Logo />
+          <span>
+            Docket<em>&nbsp;console</em>
+          </span>
         </a>
         <nav>
           <a className="navlink" href={`${REPO}/blob/main/ARCHITECTURE.md`}>
