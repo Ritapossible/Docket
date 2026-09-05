@@ -17,13 +17,36 @@ guessing.
 | `--panel-raised` | `#221F1C` | rows inside a dark card |
 | `--panel-ink` | `#F3EFE8` | text on dark |
 | `--panel-muted` | `#7C746A` | labels on dark |
-| `--red` | `#E1332A` | accent: eyebrows, highlighted phrases, denials, the `$` prompt |
-| `--blue` | `#2AA0E0` | the one primary action per screen |
+| `--purple` | `#4A0061` | brand accent on light surfaces: eyebrows, highlighted phrases, badges, the highlighted row |
+| `--purple-lift` | `#C368DF` | the same hue on dark panels: denials, the `$` prompt, the breach bar, buttons |
+| `--purple-wash` | `rgba(74,0,97,.06)` | tinted row backgrounds |
 | `--green` | `#2F8F5B` | allowed acts only — the reference has no green, this is ours |
 
 The reference is committed to a single light look with dark inset panels. No dark-mode variant:
 inventing one would mean inventing half the palette, and a design that commits reads better than
 one that hedges.
+
+### Why the accent is two colours
+
+Monad is a purple ecosystem, so the reference's red became `#4A0061`, sampled from the Arkive
+page the owner supplied. One token would not have worked. That purple scores **12.97:1** on the
+cream ground and **1.28:1** on the dark panels — and the dark panels are where the denial rows,
+the `$` prompt and the breach bar live. A straight find-and-replace would have made the most
+important thing in the interface invisible.
+
+So `--purple-lift` is the same hue (286°) lightened until it clears **5.54:1** on `--panel`.
+Light surfaces get the brand tone, dark surfaces get the lift, and both read as one colour
+because they are one hue.
+
+The blue CTA went with the red. It belonged to a red-accented palette; beside purple it reads as
+an accident rather than a decision. Every button in the console sits on a dark panel, so buttons
+now use `--purple-lift` with near-black text — on-brand, and higher contrast than the blue was.
+
+**One thing this costs.** Red carried "alert" for free, and purple does not. Denials now rely on
+the word DENIED, the lifted purple, and the named rule beneath. Green/purple/amber remain
+distinct in hue for the three act states, including under the common colour-vision deficiencies,
+but if the alert reading matters more than palette purity, Monad Berry (`#A0055D`) is the
+in-family colour to reintroduce for denial states alone.
 
 ## Type
 
