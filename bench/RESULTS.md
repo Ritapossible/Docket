@@ -1,6 +1,6 @@
-# Docket — benchmark results
+# Docket - benchmark results
 
-**Reading 2 — 4 September 2026 (week 1/2).**
+**Reading 2 - 4 September 2026 (week 1/2).**
 
 Reproduce: `make gas`, `forge build --sizes`, `./bench/blockrate.sh`.
 
@@ -18,7 +18,7 @@ The first half of the claim in `ARCHITECTURE.md` §2, measured rather than quote
 | **Mean block time** | **307 ms** |
 | Blocks / sec | 3.25 |
 
-This is the chain doing what the design depends on. It is **not** act-to-finality latency —
+This is the chain doing what the design depends on. It is **not** act-to-finality latency -
 that needs a funded key and a broadcast transaction, and is the one number still outstanding.
 
 ## 2. Gas per act, by tracked-asset count
@@ -28,7 +28,7 @@ with no cliff:
 
 | Tracked assets | Gas per act | Marginal |
 | --- | --- | --- |
-| 1 (native only) | 44,465 | — |
+| 1 (native only) | 44,465 | - |
 | 2 | 47,838 | 3,373 |
 | 4 | 54,582 | 3,372 |
 | 8 | 68,072 | 3,372 |
@@ -47,7 +47,7 @@ exists to bound the loop, not to dodge a cliff.
 | Act, median across the suite | 53,708 |
 | One asset, full 16-bucket window eviction after an idle period | 75,287 |
 | 16 tracked, 15 declared, every window stale | 1,289,841 |
-| — marginal per declared stale asset | 79,652 |
+| - marginal per declared stale asset | 79,652 |
 
 Two findings here, and the second was not what was expected.
 
@@ -59,11 +59,11 @@ worst-case eviction fell from 101,767 to 75,287.
 **The dominant term is the allowance pair, not window eviction.** Of the ~79.7k marginal per
 declared stale asset, the set-call-zero allowance on a cold token is the larger share. Reducing
 it further would mean letting an action say which of its declared assets actually need an
-allowance, rather than approving for all of them — a change to the `Action` struct, and future
+allowance, rather than approving for all of them - a change to the `Action` struct, and future
 work rather than a week-2 fix. One safe case is already skipped: an asset the call is addressed
 to (`token.transfer`) spends the mandate's own balance and needs no approval at all.
 
-The compound case is bounded — declarations cannot exceed `MAX_TRACKED_ASSETS` — and the agent
+The compound case is bounded - declarations cannot exceed `MAX_TRACKED_ASSETS` - and the agent
 pays for its own gas, so an expensive act costs only the agent. The regression guard in
 `test_compoundWorstCase` is set from the measurement rather than from a number that sounded
 tidy.
@@ -75,8 +75,8 @@ tidy.
 | `Mandate` | 22,236 B | 24,032 B | 2,340 B |
 
 `MandateFactory` was deleted at this reading: measured at 25,217 B runtime, 641 B **over** the
-limit, it would have deployed in tests and reverted on a real chain. The cause is structural —
-a factory instantiating with `new` embeds the whole of `Mandate`'s initcode — so no trimming
+limit, it would have deployed in tests and reverted on a real chain. The cause is structural -
+a factory instantiating with `new` embeds the whole of `Mandate`'s initcode - so no trimming
 could fix it. Clones were rejected (an upgradeable guard is not a guard, and a delegatecall
 would sit on every act's hot path); shrinking `Mandate` to fit was rejected as fragile. Instead
 `Mandate` emits `MandateDeployed` from its own constructor and the indexer discovers mandates
@@ -90,6 +90,6 @@ is *not* the runtime size; reading it as such is how this was briefly recorded w
 
 - **act-to-finality latency, p50 / p95 / p99, on testnet.** The remaining half of §2, and the
   headline number. Needs a funded key.
-- **Sustained acts per second**, for one mandate and across N mandates in parallel — the I4
+- **Sustained acts per second**, for one mandate and across N mandates in parallel - the I4
   claim that per-mandate state partitioning lets independent agents scale.
 - **Latency under the compound worst case**, as opposed to its gas cost.

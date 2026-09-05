@@ -138,7 +138,7 @@ async function main(): Promise<number> {
 
   if (options.verify !== undefined) {
     if (options.verify !== breakdown.score) {
-      // A published score that cannot be reproduced is not a low score — it is a broken
+      // A published score that cannot be reproduced is not a low score - it is a broken
       // publisher, and should be treated as one (spec/DCS-1.md §7).
       console.error(
         `\nVERIFY FAILED: published ${options.verify}, recomputed ${breakdown.score} at block ${payload.asOf}.`,

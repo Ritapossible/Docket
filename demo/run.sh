@@ -3,7 +3,7 @@
 #
 # Starts a local chain, deploys a fresh mandate, runs the injection scenario, and tears down.
 # Exits non-zero if the guarantee fails, so this doubles as an integration test rather than a
-# performance — PLAN.md week 4 asks for a beat that runs unattended, twice in a row.
+# performance - PLAN.md week 4 asks for a beat that runs unattended, twice in a row.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

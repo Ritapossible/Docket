@@ -1,4 +1,4 @@
-# Console — design system
+# Console - design system
 
 Derived from the Internet Court reference the owner supplied. Recorded here so the styling is
 a system rather than a pile of one-off values, and so a second person can extend it without
@@ -13,14 +13,14 @@ guessing.
 | `--bg-card` | `#EDE6D9` | numbered rows, logo chips |
 | `--ink` | `#141210` | primary text on cream |
 | `--ink-muted` | `#8A8175` | secondary text, right-aligned metadata |
-| `--panel` | `#161413` | dark cards — terminal, stream, hero panel |
+| `--panel` | `#161413` | dark cards - terminal, stream, hero panel |
 | `--panel-raised` | `#221F1C` | rows inside a dark card |
 | `--panel-ink` | `#F3EFE8` | text on dark |
 | `--panel-muted` | `#7C746A` | labels on dark |
 | `--purple` | `#4A0061` | brand accent on light surfaces: eyebrows, highlighted phrases, badges, the highlighted row |
 | `--purple-lift` | `#C368DF` | the same hue on dark panels: denials, the `$` prompt, the breach bar, buttons |
 | `--purple-wash` | `rgba(74,0,97,.06)` | tinted row backgrounds |
-| `--green` | `#2F8F5B` | allowed acts only — the reference has no green, this is ours |
+| `--green` | `#2F8F5B` | allowed acts only - the reference has no green, this is ours |
 
 The reference is committed to a single light look with dark inset panels. No dark-mode variant:
 inventing one would mean inventing half the palette, and a design that commits reads better than
@@ -30,7 +30,7 @@ one that hedges.
 
 Monad is a purple ecosystem, so the reference's red became `#4A0061`, sampled from the Arkive
 page the owner supplied. One token would not have worked. That purple scores **12.97:1** on the
-cream ground and **1.28:1** on the dark panels — and the dark panels are where the denial rows,
+cream ground and **1.28:1** on the dark panels - and the dark panels are where the denial rows,
 the `$` prompt and the breach bar live. A straight find-and-replace would have made the most
 important thing in the interface invisible.
 
@@ -40,7 +40,7 @@ because they are one hue.
 
 The blue CTA went with the red. It belonged to a red-accented palette; beside purple it reads as
 an accident rather than a decision. Every button in the console sits on a dark panel, so buttons
-now use `--purple-lift` with near-black text — on-brand, and higher contrast than the blue was.
+now use `--purple-lift` with near-black text - on-brand, and higher contrast than the blue was.
 
 **One thing this costs.** Red carried "alert" for free, and purple does not. Denials now rely on
 the word DENIED, the lifted purple, and the named rule beneath. Green/purple/amber remain
@@ -50,12 +50,12 @@ in-family colour to reintroduce for denial states alone.
 
 ## Type
 
-- **Display** — Space Grotesk 700, tight tracking (`-0.03em`), large. Headlines carry one
+- **Display** - Space Grotesk 700, tight tracking (`-0.03em`), large. Headlines carry one
   red-highlighted phrase and no more: *"One court, **every layer**."*
-- **Body** — Inter, 400/500, generous line height.
-- **Eyebrow** — JetBrains Mono, uppercase, `0.18em` tracking, small, usually red. Sits above a
+- **Body** - Inter, 400/500, generous line height.
+- **Eyebrow** - JetBrains Mono, uppercase, `0.18em` tracking, small, usually red. Sits above a
   display heading and names the section: `THE STACK`, `THE GOAL`.
-- **Metadata** — JetBrains Mono, muted, right-aligned in rows. Addresses, rules, gas, block
+- **Metadata** - JetBrains Mono, muted, right-aligned in rows. Addresses, rules, gas, block
   numbers all read as data rather than prose.
 
 ## Structural signatures
@@ -64,7 +64,7 @@ Five things make the reference recognisable. The console uses all five, and noth
 to be borrowed:
 
 1. **Mono eyebrow above a display heading**, red, letterspaced.
-2. **Numbered rows** — a red-outlined rounded square holding `01`, the label centre-left, and
+2. **Numbered rows** - a red-outlined rounded square holding `01`, the label centre-left, and
    mono metadata pushed right.
 3. **Large radii** (24px on cards, 14px on rows) with no borders on cream; separation comes
    from fill, not outline.
@@ -94,3 +94,19 @@ from eight files at 277 kB to three at 100 kB.
 The reason for vendoring at all is operational rather than aesthetic: a font CDN that is
 unreachable from a conference network silently replaces the typography with system fallbacks in
 front of the judges, and there is no way to notice in advance.
+
+## Responsive
+
+Supported from 320px up. `console/scripts/check-responsive.mjs` asserts there is no horizontal
+overflow at 320, 360, 390, 430, 768, 1024 and 1280, and runs in CI.
+
+Horizontal overflow is worth a test of its own because it is invisible on a desktop and ruins
+the page on a phone, and because the causes look innocuous. All three found here were ordinary
+values that simply exceed a small viewport: a `white-space: nowrap` metadata column, a
+`flex-basis: 340px` input, and a `min-width: 260px` set inline on the score bars. The fix for
+the last one was to move the layout out of an inline style and into CSS, where a breakpoint can
+reach it.
+
+Below 560px the masthead stacks - wordmark on its own line, nav wrapping beneath it. Four
+letterspaced mono links do not fit beside a wordmark at that width, and shrinking them until
+they do makes them unreadable.

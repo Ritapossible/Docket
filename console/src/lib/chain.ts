@@ -34,7 +34,7 @@ type State =
 /**
  * Polls the chain for a mandate's state.
  *
- * cacheTime: 0 is deliberate and load-bearing — see spec/DCS-1.md §7. viem caches the head
+ * cacheTime: 0 is deliberate and load-bearing - see spec/DCS-1.md §7. viem caches the head
  * block number for its polling interval, and a console that scored a stale view would show a
  * refusal on screen while reporting a score that predates it.
  */

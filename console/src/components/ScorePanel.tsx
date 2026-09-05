@@ -45,12 +45,12 @@ export function ScorePanel({
       }
     >
       <div className="panel-body">
-        <div style={{display: "flex", gap: 40, flexWrap: "wrap", alignItems: "flex-end"}}>
+        <div className="score-row">
           <div className="score-figure">
             {score.score}
             <small> / 1000</small>
           </div>
-          <div className="bars" style={{flex: "1 1 320px", minWidth: 260}}>
+          <div className="bars">
             <Bar label="experience" value={score.experiencePpm} />
             <Bar label="age" value={score.agePpm} />
             <Bar label="authority" value={score.authorityPpm} />
@@ -58,7 +58,7 @@ export function ScorePanel({
           </div>
         </div>
 
-        <div className="terminal" style={{marginTop: 28}}>
+        <div className="terminal score-command">
           <span className="prompt">$</span>
           <div>
             docket score {mandate} --from {fromBlock.toString()} --at {asOfBlock.toString()}{" "}

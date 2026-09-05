@@ -1,4 +1,4 @@
-# DCS-1 — Docket Conduct Score, version 1
+# DCS-1 - Docket Conduct Score, version 1
 
 *Frozen 4 September 2026.*
 
@@ -15,7 +15,7 @@ It does **not** score:
 
 - **Solvency.** A mandate's balance is a public fact a counterparty can read directly. Folding
   it into a conduct score would require a price oracle, and an oracle would destroy the one
-  property that makes this score worth anything — that it can be recomputed from chain events
+  property that makes this score worth anything - that it can be recomputed from chain events
   alone with no external input.
 - **Competence.** An agent that stays inside its mandate while making terrible trades scores
   well. DCS-1 says it did what it was permitted to do, not that it did the right thing.
@@ -69,7 +69,7 @@ Piecewise-linear in `allowedActs`, interpolated between these breakpoints:
 Interpolation between breakpoints `(x0,y0)` and `(x1,y1)`:
 `E = y0 + (n - x0) * (y1 - y0) / (x1 - x0)`, floor division.
 
-Acts are not free — the floor is 47k gas each — so experience cannot be manufactured cheaply.
+Acts are not free - the floor is 47k gas each - so experience cannot be manufactured cheaply.
 
 ### 4.2 Age `A`
 
@@ -99,7 +99,7 @@ twaCap = Σ (cap_i * durationSeconds_i) / Σ durationSeconds_i      # floor
 ```
 
 `U` measures **granted authority**, not funds held. An owner can set a large cap over an empty
-mandate, so `U` alone is not a solvency signal — see §1. What it does capture is that a mandate
+mandate, so `U` alone is not a solvency signal - see §1. What it does capture is that a mandate
 trusted with more, for longer, and kept clean, is a stronger record than one trusted with
 nothing.
 
@@ -124,7 +124,7 @@ D = min(1_000_000, Σ weight_i)
 ```
 
 The split is the substance of the score. A **hard** breach is an attempt to exceed the mandate's
-authority — to pay someone not on the list, to move more than the cap allows. A **soft** breach
+authority - to pay someone not on the list, to move more than the cap allows. A **soft** breach
 is an attempt that was merely mistimed: too fast, too late, while paused. Three hard breaches
 inside a month take the score to zero; soft ones accumulate slowly and fade.
 
@@ -141,7 +141,7 @@ score = S * 1000 / 1_000_000                                       # floor, 0..1
 ```
 
 A mandate with no history scores 200. A perfect long-lived one approaches 1000. Any mandate with
-three recent hard breaches scores 0, whatever else it has done — which is the intended shape:
+three recent hard breaches scores 0, whatever else it has done - which is the intended shape:
 conduct is a veto, not a contribution.
 
 ## 6. `inputHash`
@@ -173,7 +173,7 @@ such.
 
 A verifier must also read the chain **uncached**. Clients commonly cache the head block number
 for their polling interval, and a replay run moments after a transaction lands will then score
-the chain as it was before it — producing a different, honestly-derived, wrong answer. The
+the chain as it was before it - producing a different, honestly-derived, wrong answer. The
 reference implementation passes `cacheTime: 0`; any other implementation must do the equivalent.
 
 `--from` is required rather than defaulted to genesis. Public RPCs cap `eth_getLogs` by block
@@ -189,7 +189,7 @@ Stated here rather than discovered by a reader.
   the balance themselves.
 - **Denial spam degrades a mandate's own score** (threat-model T10). An attacker holding the
   agent key can attempt hard breaches deliberately. The record is per-mandate and rotating the
-  key does not launder it — correct for honesty, unhelpful here.
+  key does not launder it - correct for honesty, unhelpful here.
 - **A fresh mandate starts clean** (T11). This is the design, not a gap: what is expensive is an
   *aged* clean record, and `A` is where that lives.
 - **No cross-mandate identity.** One owner running ten mandates has ten independent scores.

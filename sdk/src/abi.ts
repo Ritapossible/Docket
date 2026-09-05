@@ -1,4 +1,4 @@
-// Generated from contracts/out/Mandate.sol/Mandate.json — regenerate with `make sdk-abi`.
+// Generated from contracts/out/Mandate.sol/Mandate.json - regenerate with `make sdk-abi`.
 // The event set is the product's public API (ARCHITECTURE.md §3.9); regenerating after an
 // event signature change is what keeps the SDK, the indexer and DCS-1 in step.
 

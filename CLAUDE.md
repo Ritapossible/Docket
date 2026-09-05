@@ -1,4 +1,4 @@
-# Docket — project memory
+# Docket - project memory
 
 Read this before touching anything. It is the operating manual for working in this repo, and it
 is deliberately short. The design lives in `ARCHITECTURE.md`; the schedule lives in `PLAN.md`.
@@ -6,28 +6,28 @@ is deliberately short. The design lives in `ARCHITECTURE.md`; the schedule lives
 ## What this is
 
 Docket gives an AI agent an on-chain spending mandate it cannot exceed, and turns the enforced
-record — every action allowed, every action refused — into a reputation anyone can recompute.
+record - every action allowed, every action refused - into a reputation anyone can recompute.
 
 Built for the Monad *Metropolis* hackathon, **Trust, Identity & AI Infrastructure** track.
 Deadline **13 October 2026**; we submit **12 October**.
 
 ## The six invariants
 
-Do not violate these. If a task appears to require violating one, stop and raise it — that is a
+Do not violate these. If a task appears to require violating one, stop and raise it - that is a
 design change, not an implementation detail, and it gets recorded in `ARCHITECTURE.md` §1.
 
-1. **I1** — the agent holds no key that moves funds except through `Mandate.act()`.
-2. **I2** — a policy violation **never reverts**; it emits `Denied` and returns `false`.
-3. **I3** — tightening is immediate, loosening is timelocked, there is no admin key.
-4. **I4** — no global mutable state on the hot path; mandate state is partitioned per mandate.
-5. **I5** — every published number is recomputable by a third party from chain events alone.
-6. **I6** — the model translates prose into a policy struct; a human approves it; the model
+1. **I1** - the agent holds no key that moves funds except through `Mandate.act()`.
+2. **I2** - a policy violation **never reverts**; it emits `Denied` and returns `false`.
+3. **I3** - tightening is immediate, loosening is timelocked, there is no admin key.
+4. **I4** - no global mutable state on the hot path; mandate state is partitioned per mandate.
+5. **I5** - every published number is recomputable by a third party from chain events alone.
+6. **I6** - the model translates prose into a policy struct; a human approves it; the model
    never decides.
 
 **I2 is the one that gets broken by accident.** `require()` in the policy path looks correct and
 destroys the product, because a revert erases its own logs and the denial record is the whole
-point. Policy failures return; only a broken transaction — a false outflow declaration, a
-reentrancy — reverts.
+point. Policy failures return; only a broken transaction - a false outflow declaration, a
+reentrancy - reverts.
 
 ## Vocabulary
 
@@ -38,7 +38,7 @@ write-up, and drift between them is expensive.
 | --- | --- |
 | **Mandate** | the contract holding funds and policy. One per agent purpose. Never "wallet" or "vault". |
 | **Policy** | the struct plus allowlists. Never "rules", "config" or "settings". |
-| **Act** | one attempted agent action, `act()`. Never "transaction" — a denied act is also a transaction. |
+| **Act** | one attempted agent action, `act()`. Never "transaction" - a denied act is also a transaction. |
 | **Allowed / Denied / Failed** | passed and executed / refused by policy / passed but the target reverted. Keep these three distinct everywhere. |
 | **Tightening / loosening** | the two directions of a policy change, per the partial order in `ARCHITECTURE.md` §3.4. |
 | **DCS-1** | the scoring spec. The score is "the DCS", never "the rating" or "the reputation score". |
@@ -94,7 +94,7 @@ bench/            load harness and published results
 
 - **Consult `PLAN.md` §5 before adding scope.** The cut list is ordered in advance so that
   cutting is a decision already made rather than a panic on 11 October.
-- **When a week's exit criterion is unmet, cut — do not roll work forward silently.**
+- **When a week's exit criterion is unmet, cut - do not roll work forward silently.**
 - **Honest limits ship in the product.** The console renders the uncovered threat-model rows.
   Naming a weakness before a judge finds it converts it into evidence of rigour; hiding one
   converts it into the thing they remember.

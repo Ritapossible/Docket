@@ -21,7 +21,7 @@ import {Action, AssetPolicy, Mode, Outflow, Policy, Rule} from "./libraries/Type
 ///
 /// I2 is the one that gets broken by accident. `require()` in the policy path looks correct
 /// and destroys the product: a revert rolls back state including logs, so the refused attempt
-/// — the artifact the whole system rests on — would vanish. Policy failures return; only a
+/// - the artifact the whole system rests on - would vanish. Policy failures return; only a
 /// broken transaction (an untruthful outflow declaration, reentrancy) reverts.
 contract Mandate {
     using WindowLib for WindowLib.Window;
@@ -30,7 +30,7 @@ contract Mandate {
     /// @dev Measured, not guessed. The balance assertion costs a flat 3,372 gas per tracked
     ///      asset with no cliff (bench/RESULTS.md §2), so this bounds the loop rather than
     ///      dodging a limit. It also bounds `declared`, since every declared asset must be
-    ///      tracked — which is what keeps the multi-asset worst case finite.
+    ///      tracked - which is what keeps the multi-asset worst case finite.
     uint256 public constant MAX_TRACKED_ASSETS = 16;
 
     uint64 public constant MIN_LOOSEN_DELAY = 10 minutes;
@@ -165,7 +165,7 @@ contract Mandate {
         _configureRateWindow(policy_);
         // Discovery without a registry: the indexer filters this topic across all addresses.
         // A factory that deployed mandates with `new` would have to embed the whole initcode
-        // and could never fit under EIP-170 — see bench/RESULTS.md.
+        // and could never fit under EIP-170 - see bench/RESULTS.md.
         emit MandateDeployed(owner_, agent_, guardian_, keccak256(abi.encode(policy_)));
     }
 
@@ -244,7 +244,7 @@ contract Mandate {
         }
 
         // Strictly ascending order makes duplicate assets unrepresentable, and starting the
-        // comparison at address(0) also rejects native appearing here — it belongs in `value`.
+        // comparison at address(0) also rejects native appearing here - it belongs in `value`.
         address prev = address(0);
         for (uint256 i = 0; i < a.declared.length; i++) {
             Outflow calldata o = a.declared[i];
@@ -284,7 +284,7 @@ contract Mandate {
 
     /// @notice The guarantee. The allowlist is a heuristic; this is what actually holds.
     /// @dev The allowlist constrains what the agent may *ask for*, and a sufficiently clever
-    ///      payload — an aggregator route, a nested multicall, a callback — can ask for one
+    ///      payload - an aggregator route, a nested multicall, a callback - can ask for one
     ///      thing and do another. This measures the outcome instead of predicting it, and it
     ///      is why T3 is a covered attack rather than an accepted risk.
     function _settle(Action calldata a, uint256[] memory balancesBefore) private {
@@ -368,7 +368,7 @@ contract Mandate {
     }
 
     // ---------------------------------------------------------------------------------
-    // Tightening — immediate, owner only (I3)
+    // Tightening - immediate, owner only (I3)
     // ---------------------------------------------------------------------------------
 
     function tighten(Policy calldata next) external onlyOwner {
@@ -431,7 +431,7 @@ contract Mandate {
     }
 
     // ---------------------------------------------------------------------------------
-    // Loosening — timelocked, reachable only via executeLoosen (I3)
+    // Loosening - timelocked, reachable only via executeLoosen (I3)
     // ---------------------------------------------------------------------------------
 
     function queueLoosen(bytes calldata payload) external onlyOwner returns (bytes32 id) {

@@ -4,7 +4,7 @@
  * real data, then save screenshots.
  *
  * A build that compiles is not a UI that works. This catches the failure mode a typecheck
- * cannot — the page loads, throws in a hook, and renders an empty shell.
+ * cannot - the page loads, throws in a hook, and renders an empty shell.
  *
  *   anvil & node --experimental-strip-types demo/beat.ts   # seeds a mandate
  *   npm --prefix console run build && npx vite preview --port 4173

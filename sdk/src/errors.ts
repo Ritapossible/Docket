@@ -2,7 +2,7 @@ import type {Address, Hex} from "viem";
 
 /**
  * The rules a Mandate can refuse an act with. Mirrors `Rule` in
- * `contracts/src/libraries/Types.sol` — the ordering is part of the on-chain event surface,
+ * `contracts/src/libraries/Types.sol` - the ordering is part of the on-chain event surface,
  * so entries may be appended but never reordered.
  */
 export const RULES = [

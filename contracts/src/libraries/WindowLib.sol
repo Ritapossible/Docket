@@ -6,7 +6,7 @@ pragma solidity 0.8.26;
 ///
 /// @dev Reads are O(1) because `total` is maintained incrementally; writes cost only the
 ///      buckets actually crossed since the last write, bounded by `bucketCount`. That bound
-///      is the worst case measured in `bench/` — an agent that has been idle for a whole
+///      is the worst case measured in `bench/` - an agent that has been idle for a whole
 ///      window pays to clear it, and no action can ever cost more than that.
 ///
 ///      Ticks are unitless. The spend window is ticked in seconds (`block.timestamp`); the
@@ -17,7 +17,7 @@ library WindowLib {
     /// @dev 16, not 64. A window's eviction cost is O(buckets crossed), and an act declaring
     ///      several assets whose windows have all gone stale pays that for each of them. At 64
     ///      buckets the compound worst case measured 1.33M gas (bench/RESULTS.md); at 16 it is
-    ///      a quarter of that. Bucket count only sets how smoothly the window slides — 16
+    ///      a quarter of that. Bucket count only sets how smoothly the window slides - 16
     ///      buckets over an hour is 3m45s of resolution, which is ample for a spending cap and
     ///      not worth a megagas spike.
     uint16 internal constant MAX_BUCKETS = 16;
@@ -105,7 +105,7 @@ library WindowLib {
         w.total = total;
     }
 
-    /// @notice Return `amount` to the window — used to refund a declared-but-unspent outflow.
+    /// @notice Return `amount` to the window - used to refund a declared-but-unspent outflow.
     /// @dev Saturates at zero rather than reverting: an over-refund is a bug in the caller,
     ///      but reverting here would strand funds mid-action.
     function refund(Window storage w, uint128 amount) internal {

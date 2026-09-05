@@ -113,6 +113,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # Renders the console against a chain seeded with a real denial and fails if the page
-      # loads but shows nothing — the failure a typecheck cannot see.
-      - name: Render check
+      # loads but shows nothing, or if it overflows horizontally at any supported width -
+      # the two failures a typecheck cannot see.
+      - name: Render and responsive checks
         run: ./console/scripts/e2e.sh

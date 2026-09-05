@@ -1,9 +1,9 @@
-# Docket — Architecture
+# Docket - Architecture
 
 *Status: design, pre-implementation. Last revised 2026-09-04.*
 
 Docket gives an AI agent an on-chain spending mandate it cannot exceed, and turns the
-enforced record — every action allowed, every action refused — into a reputation anyone can
+enforced record - every action allowed, every action refused - into a reputation anyone can
 recompute.
 
 This document is the technical contract for the project. Where it disagrees with the code,
@@ -16,7 +16,7 @@ tolerated.
 
 An owner deploys a **Mandate**: a contract that holds funds and a policy. The agent gets a key
 that can call exactly one function, `act()`. The contract evaluates the policy inside that same
-transaction and refuses anything outside it. Both outcomes are logged — a refusal is a
+transaction and refuses anything outside it. Both outcomes are logged - a refusal is a
 permanent public artifact, not an error message. An open, versioned scoring function reduces
 that event history to a number, published to the ERC-8004 registries, which any third party can
 recompute from chain data alone.
@@ -37,11 +37,11 @@ freely; these may not change without an explicit decision recorded in this file.
 | **I5** | Every number Docket publishes is recomputable by a third party from chain events alone. | A reputation you have to trust the publisher for is not a reputation. |
 | **I6** | The model never judges. It only translates prose into a policy struct a human approves before it binds. | Natural language in, structured spec out, deterministic engine decides. |
 
-### I2 in detail — the decision that shapes everything
+### I2 in detail - the decision that shapes everything
 
 The obvious implementation of a spending guard is `require(withinPolicy, "denied")`. That
 implementation cannot produce Docket, because a revert rolls back state *including logs*. The
-refused attempt — the single most valuable record the system produces — would vanish.
+refused attempt - the single most valuable record the system produces - would vanish.
 
 So `act()` is written to succeed on refusal:
 
@@ -72,16 +72,16 @@ see whether the project still stands. It does not.
 
 | Requirement | On Monad | Elsewhere |
 | --- | --- | --- |
-| Policy check sits **inside** the agent's action loop | 300ms blocks, 600ms finality — the agent asks and proceeds synchronously | 12s blocks force batching, which destroys per-action enforcement, or push the check into a TEE / ZK circuit / trusted operator |
+| Policy check sits **inside** the agent's action loop | 300ms blocks, 600ms finality - the agent asks and proceeds synchronously | 12s blocks force batching, which destroys per-action enforcement, or push the check into a TEE / ZK circuit / trusted operator |
 | Every **refused** attempt is stored on-chain | a denial moves no value and costs ordinary gas | paying L1 gas to record something that did *not* happen is indefensible |
 | Rolling-window accounting writes storage on **every** action | ring-buffer writes are affordable | per-action storage writes dominate the cost of the action itself |
 | Thousands of mandates act concurrently | I4 keeps state per-mandate, which is the ideal shape for optimistic parallel execution | sequential execution makes the partitioning pointless |
 | Console renders denials sub-second | Execution Events firehose | RPC polling, with the latency the demo is built on |
 
 The comparison that matters for the writeup: the strongest prior enforcement mechanism in the
-reference vault is a ZK circuit gate at 30–75 seconds of proving per spend. Docket targets a p99
-gate latency under one second, with the policy public rather than hidden. That trade — public
-policy, no trusted hardware, real-time — is the whole argument, and **§4.6 exists to measure it
+reference vault is a ZK circuit gate at 30-75 seconds of proving per spend. Docket targets a p99
+gate latency under one second, with the policy public rather than hidden. That trade - public
+policy, no trusted hardware, real-time - is the whole argument, and **§4.6 exists to measure it
 rather than assert it.**
 
 ---
@@ -89,10 +89,10 @@ rather than assert it.**
 ## 3. On-chain
 
 Solidity `0.8.26`, Foundry, no proxies. Mandates are immutable once deployed; upgrading means
-deploying a new mandate and migrating funds, which is a deliberate constraint — an upgradeable
+deploying a new mandate and migrating funds, which is a deliberate constraint - an upgradeable
 guard is not a guard.
 
-### 3.1 Deployment and discovery — no factory
+### 3.1 Deployment and discovery - no factory
 
 There is no factory contract, and this is a measured decision rather than a preference. A
 factory that instantiates with `new` must embed the whole of `Mandate`'s initcode; at 24,032 B
@@ -103,7 +103,7 @@ considered.
 Instead `Mandate` emits `MandateDeployed(owner, agent, guardian, policyHash)` from its own
 constructor, and the indexer discovers mandates by filtering that topic across all addresses.
 CREATE2 determinism, where it is wanted, comes from the standard deployer. This also removes a
-registry slot that every deployment would have written — the kind of shared state I4 exists to
+registry slot that every deployment would have written - the kind of shared state I4 exists to
 keep out of the system.
 
 ### 3.2 `Mandate`
@@ -121,10 +121,10 @@ be delegated to a monitoring bot or a co-signer without expanding trust. Unpausi
 loosening and is timelocked like any other.
 
 Owner withdrawal is instant: removing the owner's own funds reduces what the agent can spend,
-which is a tightening under §3.4. Deposits are instant for the same reason in reverse — caps
+which is a tightening under §3.4. Deposits are instant for the same reason in reverse - caps
 still bind, so more balance does not mean more authority.
 
-### 3.3 `act()` — the hot path
+### 3.3 `act()` - the hot path
 
 ```
 act(Action calldata a) returns (bool ok, bytes memory ret)
@@ -155,7 +155,7 @@ Ordered steps:
 4. Snapshot balances of every tracked asset.
 5. Debit the windows optimistically by the declared amounts (effects before interaction).
 6. Grant an exact-amount allowance if the action requires one, perform the low-level call,
-   then zero the allowance — all inside this transaction (§3.7).
+   then zero the allowance - all inside this transaction (§3.7).
 7. **Balance assertion** (§3.6). Failure here *does* revert: an untruthful declaration is not a
    policy outcome to be recorded, it is a broken transaction.
 8. Refund the window debit by any declared-but-unspent amount.
@@ -176,8 +176,8 @@ struct Policy {
 }
 ```
 
-Allowlists live in mappings alongside the struct — `allowed[target][selector]`,
-`assetCap[asset]`, and the `trackedAssets` set — rather than in a merkle root. A root would be
+Allowlists live in mappings alongside the struct - `allowed[target][selector]`,
+`assetCap[asset]`, and the `trackedAssets` set - rather than in a merkle root. A root would be
 cheaper to store, but you cannot tell from two roots whether one is a subset of the other, which
 would force *every* allowlist change through the timelock and make routine removals slow. Under
 I3, removals must be instant. Cheap storage on Monad makes the mapping affordable; the merkle
@@ -199,7 +199,7 @@ I3 needs a decidable predicate `isTightening(old, new)`, which is a partial orde
 Every field must be non-loosening and at least one strictly tightening. Anything else is a
 loosening: `queueLoosen(newPolicy)` emits `LoosenQueued` with the full diff, and
 `executeLoosen()` becomes callable after `loosenDelay` (default 1 hour, itself only lengthenable
-instantly and shortenable through the timelock). The public queue event is half the value — an
+instantly and shortenable through the timelock). The public queue event is half the value - an
 owner-key compromise becomes something the guardian can see coming and pause.
 
 ### 3.5 Window accounting
@@ -219,7 +219,7 @@ struct Window {
 ```
 
 Advancing zeroes stale buckets and subtracts them from `total`. Worst case is `bucketCount`
-clears in one action — bounded, and measured in §4.6 rather than assumed.
+clears in one action - bounded, and measured in §4.6 rather than assumed.
 
 Spend windows key on `block.timestamp`; **rate windows key on `block.number`.** At 300ms blocks,
 timestamps have too coarse a resolution to express "at most 30 actions per second", which is
@@ -228,8 +228,8 @@ exactly the regime Docket exists to police.
 ### 3.6 The balance assertion
 
 The allowlist is a heuristic; this is the guarantee. Everything else in the policy constrains
-what the agent may *ask for*, and a sufficiently clever calldata payload — an aggregator route,
-a nested multicall, a callback — can ask for one thing and do another. The assertion measures
+what the agent may *ask for*, and a sufficiently clever calldata payload - an aggregator route,
+a nested multicall, a callback - can ask for one thing and do another. The assertion measures
 the outcome instead of predicting it:
 
 ```
@@ -245,7 +245,7 @@ Its limit is precise and stated in §6: it covers what it tracks, and nothing el
 ### 3.7 No standing allowances
 
 `approve`, `increaseAllowance` and `permit` are permanently excluded from the selector
-allowlist — the mandate will not sign an approval as a normal action. Where an action needs one,
+allowlist - the mandate will not sign an approval as a normal action. Where an action needs one,
 the mandate sets the exact allowance, performs the call, and zeroes the allowance in the same
 transaction. Docket never leaves an allowance outstanding between transactions, so a
 counterparty that is allowlisted today cannot drain a mandate tomorrow.
@@ -259,7 +259,7 @@ can hurt anyone, which is how intrusion detection graduates to intrusion prevent
 guard product avoids the failure mode that actually kills it: the owner gets blocked doing
 legitimate work and switches it off.
 
-### 3.9 Events — the public API
+### 3.9 Events - the public API
 
 The event set is the product. Changing it is a breaking change to every downstream consumer,
 including DCS-1.
@@ -289,11 +289,11 @@ Execution Events for the live console stream and falls back to log queries for b
 anyone reproducing a score from scratch. Holds no privileged data: **anything the indexer knows,
 it learned from a public log**, which is what makes I5 true rather than aspirational.
 
-### 4.2 DCS-1 — the Docket Conduct Score
+### 4.2 DCS-1 - the Docket Conduct Score
 
 A named, versioned, published spec (`spec/DCS-1.md`) with a reference implementation. It is a
 pure function of a mandate's event log up to a stated block height. No model judgement appears
-anywhere in it, and the weights are constants in the spec — changing them produces DCS-2, never
+anywhere in it, and the weights are constants in the spec - changing them produces DCS-2, never
 a silently different DCS-1.
 
 ```
@@ -309,7 +309,7 @@ D  breach      = min(1, Σ over denials of w(class) * 0.5^(ageDays/30))
 
 Three hard breaches take the score to zero; they decay over months rather than washing out in a
 week. The shape encodes the sybil answer: `E`, `A` and `K` are all *expensive to fabricate and
-impossible to accelerate* — you cannot buy 180 days of clean history, and you cannot fake a
+impossible to accelerate* - you cannot buy 180 days of clean history, and you cannot fake a
 time-weighted balance without actually posting the capital.
 
 Every published score ships `(score, specVersion, blockHeight, inputHash)` where `inputHash` is
@@ -323,7 +323,7 @@ Reputation registry: the DCS-1 tuple above. The standard is a draft; `spec/ERC80
 exact revision implemented and records where Docket deviates.
 
 What Docket contributes that the standard leaves open is the *provenance* of the reputation.
-ERC-8004's reputation entries are typically client feedback — subjective, solicitable, and worth
+ERC-8004's reputation entries are typically client feedback - subjective, solicitable, and worth
 what any review is worth. A DCS-1 entry is a deterministic function of enforced behaviour, and
 the enforcement is the same contract that produced the evidence.
 
@@ -342,7 +342,7 @@ worse than no dry-run.
 ### 4.5 Replay and policy authoring
 
 The owner writes a policy in prose. A model compiles it to a `Policy` struct plus allowlist
-diffs — **and then stops**, per I6. The struct is replayed against the mandate's real action
+diffs - **and then stops**, per I6. The struct is replayed against the mandate's real action
 history and the console shows exactly which past actions the candidate policy would have
 refused, and why. The owner reads that list and approves the struct, not the sentence.
 
@@ -370,12 +370,12 @@ policy authoring helpers, and a tool-shim so an agent framework can call it as a
 is the integration point that matters: the agent's own harness sees a normal tool that sometimes
 returns "refused, by this rule".
 
-**Console** (`console/`, Vite + React — *not* Next.js, as an earlier draft of this document
+**Console** (`console/`, Vite + React - *not* Next.js, as an earlier draft of this document
 said). The console reads chain state directly from an RPC in the browser, holds no key and has
 no server of its own, so it deploys as static files; Next's server-side rendering, routing and
 data layer would all sit unused while adding a build and a runtime to maintain. Its visual
 system is documented separately in `console/DESIGN.md`, and its typefaces are vendored rather
-than loaded from a font CDN — a demo must not depend on a third party being reachable from
+than loaded from a font CDN - a demo must not depend on a third party being reachable from
 wherever it is being shown. Live allowed/denied stream over Execution Events; limit
 controls that take effect in one block; denial rows carrying the rule, the decoded calldata, and
 a persistent **"what this mandate does not protect you from"** panel rendered directly from
@@ -383,7 +383,7 @@ a persistent **"what this mandate does not protect you from"** panel rendered di
 is the point.
 
 **Agent-native onboarding.** Machine-readable service description, registration by wallet
-signature, a trial allowance, and self-serve top-up — so an agent can discover Docket, register,
+signature, a trial allowance, and self-serve top-up - so an agent can discover Docket, register,
 and operate without a human at any step.
 
 ---
@@ -399,13 +399,13 @@ marked covered until a test references it by ID.** Summary:
 | T2 | Agent session key stolen | attacker is bound by the same policy; guardian pause; key rotation | covered |
 | T3 | Calldata smuggling via aggregator, multicall or callback | selector allowlist + declared outflows + balance assertion (§3.6) | covered |
 | T4 | Drain via a standing allowance | no standing allowances; set-call-zero (§3.7) | covered |
-| T5 | Allowlisted counterparty turns malicious | loss bounded to the declared outflow | **partial** — it can take exactly what was declared |
+| T5 | Allowlisted counterparty turns malicious | loss bounded to the declared outflow | **partial** - it can take exactly what was declared |
 | T6 | Console compromised, limits raised | loosening timelock + public `LoosenQueued` (§3.4) | covered |
 | T7 | Owner key fully compromised | timelock creates a detection window; guardian pauses | **partial** |
-| T8 | Untracked asset drained — an NFT, or a token received mid-call | tracked-asset list is finite | **not covered** |
+| T8 | Untracked asset drained - an NFT, or a token received mid-call | tracked-asset list is finite | **not covered** |
 | T9 | Reentrancy into `act()` | `nonReentrant` | covered |
 | T10 | Compromised key spams denials to tank the score | agent pays gas; hard/soft classes; per-mandate scoring | **partial** |
-| T11 | Sybil — abandon a tarnished mandate, deploy a fresh one | economic only: age and time-weighted capital in DCS-1 | **partial, by design** |
+| T11 | Sybil - abandon a tarnished mandate, deploy a fresh one | economic only: age and time-weighted capital in DCS-1 | **partial, by design** |
 | T12 | Oracle manipulation against price-band rules | price bands are out of scope in v1 | n/a in v1 |
 | T13 | Indexer publishes a false score | anyone recomputes from events; `inputHash` published | covered |
 | T14 | The public denial log leaks the agent's strategy | none in v1 | **not covered** |
@@ -450,9 +450,9 @@ Resolve by the date given; a decision recorded here beats a decision rediscovere
 - ~~**Gas ceiling on policy expressiveness.**~~ **Resolved, week 1.** Measured at a flat 3,372
   gas per tracked asset with no cliff; a fully-tracked act is 95k. `MAX_TRACKED_ASSETS` stays at
   16 to bound the loop rather than to dodge a limit. The measurement did surface a different
-  problem — the compound worst case at 64 buckets was 1.33M gas — which moved `MAX_BUCKETS` to
+  problem - the compound worst case at 64 buckets was 1.33M gas - which moved `MAX_BUCKETS` to
   16 and identified the set-call-zero allowance pair, not window eviction, as the dominant term.
-  See `bench/RESULTS.md` §2–3.
+  See `bench/RESULTS.md` §2-3.
 - **Per-asset approval opt-in** (v2). An action approves every declared asset, but many need no
   allowance at all. Letting the `Action` say which do would cut the dominant term in the
   multi-asset worst case. Deferred: it changes the struct, and the case is already bounded.

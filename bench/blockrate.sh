@@ -2,7 +2,7 @@
 # Observed block production rate on a Monad RPC.
 #
 # This measures what the chain actually does, which is the first half of the claim in
-# ARCHITECTURE.md §2. It does NOT measure act() latency — submission to finality for a real
+# ARCHITECTURE.md §2. It does NOT measure act() latency - submission to finality for a real
 # transaction needs a funded key and lands with the rest of the week-2 harness.
 #
 #   ./bench/blockrate.sh [rpc-url] [seconds]

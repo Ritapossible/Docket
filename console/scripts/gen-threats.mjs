@@ -29,7 +29,7 @@ for (const line of readFileSync(specPath, "utf8").split("\n")) {
 }
 
 if (rows.length === 0) {
-  console.error(`No threat rows parsed from ${specPath} — refusing to emit an empty panel.`);
+  console.error(`No threat rows parsed from ${specPath} - refusing to emit an empty panel.`);
   process.exit(1);
 }
 

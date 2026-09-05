@@ -25,7 +25,7 @@ export function ActStream({acts, live}: {acts: ActRecord[]; live: boolean}) {
       <div className="stream">
         {newestFirst.length === 0 ? (
           <div className="empty">
-            No acts yet. Every attempt this mandate makes — allowed or refused — appears here.
+            No acts yet. Every attempt this mandate makes - allowed or refused - appears here.
           </div>
         ) : (
           newestFirst.map((act) => {
@@ -39,7 +39,7 @@ export function ActStream({acts, live}: {acts: ActRecord[]; live: boolean}) {
                   {act.selector !== "0x00000000" ? ` · ${act.selector}` : ""}
                   {act.rule ? (
                     <span className="act-note">
-                      refused: <span className="act-rule">{act.rule}</span> — {ruleSentence(act.rule)}
+                      refused: <span className="act-rule">{act.rule}</span> - {ruleSentence(act.rule)}
                     </span>
                   ) : null}
                 </div>

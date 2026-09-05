@@ -48,7 +48,7 @@ export function App() {
         </h1>
         <p className="lede" style={{marginTop: 22}}>
           A mandate holds the funds and the policy. The agent holds a key that can call exactly
-          one function. Every attempt it makes — allowed or refused — is a permanent public
+          one function. Every attempt it makes - allowed or refused - is a permanent public
           record, and the refusals are what the score is built from.
         </p>
 

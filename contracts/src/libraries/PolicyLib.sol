@@ -33,7 +33,7 @@ library PolicyLib {
 
         // Window SHAPE must be identical on the instant path. A longer window is stricter in
         // principle, but changing the shape necessarily clears the ring buffer's accumulated
-        // usage — which lets the agent spend again immediately, and is therefore a loosening
+        // usage - which lets the agent spend again immediately, and is therefore a loosening
         // however the caps move. Shape changes go through the timelock in both directions.
         if (next.rateWindow != prev.rateWindow) return false;
         if (next.rateBuckets != prev.rateBuckets) return false;

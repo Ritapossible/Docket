@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Boots a chain, seeds a mandate with a real denial, builds and serves the console, and
-# asserts it rendered live state. The console's only meaningful test — a build that compiles
+# asserts it rendered live state. The console's only meaningful test - a build that compiles
 # proves nothing about a dashboard.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -44,3 +44,6 @@ done
 
 RPC_URL="http://127.0.0.1:$PORT_CHAIN" CONSOLE_URL="http://127.0.0.1:$PORT_WEB" \
   node console/scripts/verify-render.mjs "$MANDATE"
+
+RPC_URL="http://127.0.0.1:$PORT_CHAIN" CONSOLE_URL="http://127.0.0.1:$PORT_WEB" \
+  node console/scripts/check-responsive.mjs "$MANDATE"

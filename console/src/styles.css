@@ -212,12 +212,14 @@ h3 { font-size: 20px; letter-spacing: -0.02em; }
   color: var(--ink-muted);
   text-align: right;
   white-space: nowrap;
+  min-width: 0;
 }
 .row.on-dark .row-meta { color: var(--panel-muted); }
 
 /* ── Stat grid ──────────────────────────────────────────────────────── */
 
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.panel-head { flex-wrap: wrap; }
 @media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 520px) { .stats { grid-template-columns: 1fr; } }
 
@@ -270,7 +272,7 @@ h3 { font-size: 20px; letter-spacing: -0.02em; }
 
 /* ── Governance / controls ──────────────────────────────────────────── */
 
-.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 14px; }
 
 .card {
   background: var(--bg-sunk);
@@ -323,7 +325,7 @@ h3 { font-size: 20px; letter-spacing: -0.02em; }
   border: 1px solid rgba(20, 18, 16, 0.16);
   background: #fff;
   color: var(--ink);
-  flex: 1 1 340px;
+  flex: 1 1 min(340px, 100%);
   min-width: 0;
 }
 .field input:focus { outline: 2px solid var(--purple); outline-offset: 1px; }
@@ -356,7 +358,17 @@ h3 { font-size: 20px; letter-spacing: -0.02em; }
 }
 .score-figure small { font-size: 0.32em; color: var(--panel-muted); letter-spacing: 0; }
 
-.bars { display: flex; flex-direction: column; gap: 12px; }
+/* Was an inline style with min-width 260px, which is wider than the content box of a 320px
+   phone and was the last thing overflowing. Layout belongs here where it can respond. */
+.score-row {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.score-command { margin-top: 28px; }
+
+.bars { display: flex; flex-direction: column; gap: 12px; flex: 1 1 min(320px, 100%); min-width: 0; }
 .bar-label {
   display: flex;
   justify-content: space-between;
@@ -419,5 +431,40 @@ footer {
   .threat { grid-template-columns: 36px 1fr; }
   .threat .tstatus { grid-column: 2; text-align: left; }
   .row { grid-template-columns: auto 1fr; }
-  .row-meta { grid-column: 2; text-align: left; }
+
+  /* Once the meta column moves under the label it has the full width, and nowrap is exactly
+     what was pushing .row past the viewport on a 360px phone. */
+  .row-meta { grid-column: 2; text-align: left; white-space: normal; }
+}
+
+@media (max-width: 560px) {
+  .shell { padding-inline: 18px; }
+  section { padding: 40px 0; }
+
+  /* The masthead stacks: wordmark on its own line, nav below it as a wrapping row. Four
+     letterspaced mono links do not fit beside a wordmark at this width, and shrinking them
+     until they do makes them unreadable. */
+  .masthead { flex-direction: column; align-items: flex-start; gap: 14px; padding: 22px 0 4px; }
+  .masthead nav { gap: 14px 18px; }
+  .navlink { font-size: 11px; letter-spacing: 0.12em; }
+  .wordmark { font-size: 23px; }
+
+  .panel-body { padding: 18px; }
+  .panel-head { padding: 16px 18px; }
+  .act { padding: 12px 18px; gap: 10px; }
+  .row { padding: 16px 18px; gap: 14px; }
+  .card { padding: 22px; }
+  .threat { padding: 14px 18px; }
+  .stat { padding: 16px; }
+  .stat .v { font-size: 22px; }
+  .score-row { gap: 20px; }
+  .score-command { margin-top: 22px; }
+  .lede { font-size: 16.5px; }
+  .button { width: 100%; text-align: center; }
+}
+
+@media (max-width: 380px) {
+  .act { grid-template-columns: 1fr; }
+  .act-block { grid-column: 1; }
+  .verdict { font-size: 11px; }
 }

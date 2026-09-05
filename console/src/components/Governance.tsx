@@ -17,7 +17,7 @@ export function Governance({loosenDelay}: {loosenDelay: bigint}) {
           <p className="lede">
             There is no admin key. Tightening a policy takes effect in the next block; loosening
             one is queued in public and executable only after a delay. Compromising the owner's
-            console does not let anyone raise a limit and drain — the only fast direction is the
+            console does not let anyone raise a limit and drain - the only fast direction is the
             safe one.
           </p>
         </div>

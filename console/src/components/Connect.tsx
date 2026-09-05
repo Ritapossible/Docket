@@ -31,7 +31,7 @@ export function Connect({onConnect}: {onConnect: (connection: Connection) => voi
             <input
               value={mandate}
               onChange={(event) => setMandate(event.target.value)}
-              placeholder="mandate address — 0x…"
+              placeholder="mandate address - 0x…"
               spellCheck={false}
               aria-label="Mandate address"
             />
@@ -60,7 +60,7 @@ export function Connect({onConnect}: {onConnect: (connection: Connection) => voi
 
         <p style={{color: "var(--panel-muted)", fontSize: 13, marginTop: 18, marginBottom: 0}}>
           The console never holds a key and never signs. It reads public events, which is all a
-          verifier ever needs — the from-block is required because public RPCs cap log queries by
+          verifier ever needs - the from-block is required because public RPCs cap log queries by
           range.
         </p>
       </div>

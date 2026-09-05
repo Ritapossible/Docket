@@ -91,7 +91,7 @@ export async function evaluate(
  * @throws {DeniedError} if the mandate refused the action.
  * @throws {TargetFailedError} if the policy passed but the target call reverted.
  *
- * The contract does NOT revert on a policy violation — it emits `Denied` and returns false, so
+ * The contract does NOT revert on a policy violation - it emits `Denied` and returns false, so
  * that the refused attempt survives as a public record (invariant I2). That means a successful
  * receipt does not imply the action executed. This function reads the emitted events and turns
  * a refusal into a thrown error, so ordinary control flow is correct by default.

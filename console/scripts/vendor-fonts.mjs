@@ -4,12 +4,12 @@
  * src/fonts.css.
  *
  * The console is a demo surface. Loading webfonts from a third party at runtime means a
- * restrictive network — conference wifi, a corporate proxy, an offline judge — silently
+ * restrictive network - conference wifi, a corporate proxy, an offline judge - silently
  * replaces the typography with system fallbacks mid-presentation. Vendoring removes that
  * failure mode entirely, and the licences (OFL) permit it.
  *
  * Output lands in src/ rather than public/ so Vite fingerprints the files and rewrites their
- * URLs against the configured base — a public/ asset needs a root-absolute path, which breaks
+ * URLs against the configured base - a public/ asset needs a root-absolute path, which breaks
  * the moment the console is served from a sub-directory.
  *
  *   node console/scripts/vendor-fonts.mjs
@@ -35,7 +35,7 @@ const css = await (await fetch(SOURCE, {headers: {"User-Agent": UA}})).text();
 const blocks = css.split("@font-face").slice(1);
 mkdirSync(fontDir, {recursive: true});
 
-/** family -> {file, weights:Set, style, range} — these are variable fonts, so every weight of
+/** family -> {file, weights:Set, style, range} - these are variable fonts, so every weight of
  *  a family resolves to the identical woff2. Writing one file per requested weight tripled the
  *  payload for byte-identical data; deduping by content hash and emitting a weight RANGE lets
  *  the browser interpolate from a single file. */
@@ -77,12 +77,12 @@ for (const block of blocks) {
 }
 
 if (families.size === 0) {
-  console.error("No latin font faces parsed — refusing to emit an empty stylesheet.");
+  console.error("No latin font faces parsed - refusing to emit an empty stylesheet.");
   process.exit(1);
 }
 
 const out = [
-  "/* Vendored by console/scripts/vendor-fonts.mjs — do not edit by hand.",
+  "/* Vendored by console/scripts/vendor-fonts.mjs - do not edit by hand.",
   " * Self-hosted so the console's typography cannot be removed by a hostile network.",
   " * Space Grotesk, Inter and JetBrains Mono are all SIL Open Font License 1.1. */",
   "",

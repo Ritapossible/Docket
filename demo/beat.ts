@@ -125,21 +125,21 @@ async function main() {
   say(`policy: ${formatEther(PER_ACTION_CAP)} per act, ${formatEther(WINDOW_CAP)} per hour`);
 
   // Allowlisting is a loosening, so even setup goes through the timelock. That is I3 working,
-  // not ceremony — and it is worth seeing in the demo rather than bypassed.
+  // not ceremony - and it is worth seeing in the demo rather than bypassed.
   const allowPayload = encodeFunctionData({
     abi: mandateAbi,
     functionName: "allowCall",
     args: [counterparty, "0x00000000"],
   });
   await ownerCall(mandate, "queueLoosen", [allowPayload]);
-  say(`allowlisting ${counterparty} — queued, executable in ${LOOSEN_DELAY / 60n} minutes`);
+  say(`allowlisting ${counterparty} - queued, executable in ${LOOSEN_DELAY / 60n} minutes`);
 
   await ownerCall(mandate, "executeLoosen", [allowPayload]).catch(() => null);
   say("attempting to execute early... refused by the timelock");
 
   await warp(LOOSEN_DELAY + 1n);
   await ownerCall(mandate, "executeLoosen", [allowPayload]);
-  say("timelock elapsed — counterparty is now allowlisted");
+  say("timelock elapsed - counterparty is now allowlisted");
 
   heading("The agent works normally");
   for (let i = 0; i < 3; i++) {
@@ -166,7 +166,7 @@ async function main() {
   let denied: DeniedError | null = null;
   try {
     await act({public: publicClient, wallet: agentWallet}, mandate, injected, {account: agent});
-    say("\x1b[31mFAILED: the action went through — the guarantee is broken\x1b[0m");
+    say("\x1b[31mFAILED: the action went through - the guarantee is broken\x1b[0m");
     process.exitCode = 1;
   } catch (error) {
     if (!(error instanceof DeniedError)) throw error;
@@ -197,7 +197,7 @@ async function main() {
   if (now.score < THRESHOLD) {
     say(`\x1b[31m  REFUSED\x1b[0m  agent scores ${now.score}; the denial is public and recent`);
   } else {
-    say(`  served — agent scores ${now.score}`);
+    say(`  served - agent scores ${now.score}`);
   }
 
   if (now.score >= before.score) {
@@ -205,7 +205,7 @@ async function main() {
     process.exitCode = 1;
   }
   if (now.breachPpm === 0n) {
-    say("\x1b[31mFAILED: the denial was not counted — is the chain view stale?\x1b[0m");
+    say("\x1b[31mFAILED: the denial was not counted - is the chain view stale?\x1b[0m");
     process.exitCode = 1;
   }
 

@@ -1,7 +1,7 @@
 import {Eyebrow, Row} from "./Sections.tsx";
 
 /**
- * The enforcement ladder from ARCHITECTURE.md — the pitch, in the reference's numbered-row
+ * The enforcement ladder from ARCHITECTURE.md - the pitch, in the reference's numbered-row
  * form. Docket occupies the last rung and is the only one highlighted, because a list where
  * everything is emphasised says nothing.
  */
@@ -34,7 +34,7 @@ const RUNGS = [
     index: "05",
     label: "ZK circuit gate",
     sub: "A violating spend cannot produce a valid proof.",
-    meta: "30–75s proving · no trace at all",
+    meta: "30-75s proving · no trace at all",
   },
   {
     index: "06",
@@ -55,7 +55,7 @@ export function Ladder() {
         </h2>
         <p className="lede">
           Bounded agent authority has been solved five ways. Each buys safety with a trusted
-          component, and the two strongest both make a refusal invisible — an enclave denies
+          component, and the two strongest both make a refusal invisible - an enclave denies
           silently, a ZK gate leaves no trace by construction. Docket makes being stopped into
           evidence, which is what makes a reputation possible at all.
         </p>

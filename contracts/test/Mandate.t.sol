@@ -14,7 +14,7 @@ import {Vm} from "forge-std/Vm.sol";
 ///      enforces that in CI.
 contract MandateTest is Base {
     // ------------------------------------------------------------------------------
-    // I2 — a policy violation never reverts
+    // I2 - a policy violation never reverts
     // ------------------------------------------------------------------------------
 
     /// @dev The invariant the whole product rests on. `require()` here would look correct and
@@ -67,7 +67,7 @@ contract MandateTest is Base {
     }
 
     // ------------------------------------------------------------------------------
-    // T1 — prompt injection
+    // T1 - prompt injection
     // ------------------------------------------------------------------------------
 
     function test_T1_injectedTransferToUnknownAddressIsDenied() public {
@@ -97,7 +97,7 @@ contract MandateTest is Base {
     }
 
     // ------------------------------------------------------------------------------
-    // T2 — stolen agent key
+    // T2 - stolen agent key
     // ------------------------------------------------------------------------------
 
     /// @dev A thief holding the agent key is bound by exactly the same policy. That is the
@@ -124,7 +124,7 @@ contract MandateTest is Base {
     }
 
     // ------------------------------------------------------------------------------
-    // T3 — calldata smuggling
+    // T3 - calldata smuggling
     // ------------------------------------------------------------------------------
 
     /// @dev The allowlist is a heuristic: it sees `transfer` and a declared 100, and cannot
@@ -187,7 +187,7 @@ contract MandateTest is Base {
     }
 
     // ------------------------------------------------------------------------------
-    // T4 — standing allowances
+    // T4 - standing allowances
     // ------------------------------------------------------------------------------
 
     function test_T4_noStandingAllowanceRemainsAfterAnAct() public {
@@ -216,7 +216,7 @@ contract MandateTest is Base {
     }
 
     // ------------------------------------------------------------------------------
-    // T6 — owner console compromised
+    // T6 - owner console compromised
     // ------------------------------------------------------------------------------
 
     function test_T6_looseningIsTimelockedAndPubliclyQueued() public {
@@ -316,7 +316,7 @@ contract MandateTest is Base {
     }
 
     // ------------------------------------------------------------------------------
-    // T9 — reentrancy
+    // T9 - reentrancy
     // ------------------------------------------------------------------------------
 
     function test_T9_anExternalContractCannotCallAct() public {

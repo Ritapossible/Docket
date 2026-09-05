@@ -2,7 +2,7 @@
 /**
  * Serves console/dist with the exact headers from vercel.json.
  *
- * The point is that the production header set — the CSP in particular — is testable before it
+ * The point is that the production header set - the CSP in particular - is testable before it
  * ships. A Content-Security-Policy that blocks the app's own bundle is indistinguishable from a
  * broken deploy, and it is not something you want to discover on the hosted URL.
  *

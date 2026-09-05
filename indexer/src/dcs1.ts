@@ -1,7 +1,7 @@
 import {HARD_RULES, type CapSegment, type MandateHistory, type ScoreBreakdown} from "./types.ts";
 
 /**
- * DCS-1 — the reference implementation of spec/DCS-1.md.
+ * DCS-1 - the reference implementation of spec/DCS-1.md.
  *
  * Every value here is a non-negative BigInt in parts per million and every division is floor
  * division. There is no floating point anywhere, and there must not be: invariant I5 requires
@@ -65,7 +65,7 @@ export function interpolate(table: ReadonlyArray<readonly [bigint, bigint]>, x: 
   return last[1];
 }
 
-/** spec/DCS-1.md §4.3 — time-weighted native windowCap. */
+/** spec/DCS-1.md §4.3 - time-weighted native windowCap. */
 export function timeWeightedCap(segments: readonly CapSegment[]): bigint {
   let weighted = 0n;
   let total = 0n;

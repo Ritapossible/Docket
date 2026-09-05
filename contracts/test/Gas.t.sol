@@ -9,7 +9,7 @@ import {MockERC20} from "./mocks/MockERC20.sol";
 
 /// @notice Resolves the open question in ARCHITECTURE.md §9 with a measurement.
 ///
-/// @dev The balance assertion reads every tracked asset's balance twice per act — once for the
+/// @dev The balance assertion reads every tracked asset's balance twice per act - once for the
 ///      snapshot, once to settle. That is the cost of the guarantee, and it scales linearly
 ///      with `trackedAssets`. Somewhere on that line the guard costs more than the action it
 ///      guards, and `MAX_TRACKED_ASSETS` belongs at that point rather than at a round number
@@ -71,7 +71,7 @@ contract GasTest is Test {
 
     /// @dev The true worst case, and the one that matters for sizing a block: an act that
     ///      declares several assets whose windows have all gone stale, on a mandate tracking
-    ///      the maximum. Note the asymmetry that keeps this bounded — `_settle` touches every
+    ///      the maximum. Note the asymmetry that keeps this bounded - `_settle` touches every
     ///      tracked asset, but only *declared* assets have their windows rolled, so the
     ///      expensive term scales with declarations per act rather than with the tracked set.
     function test_compoundWorstCase() public {
@@ -97,7 +97,7 @@ contract GasTest is Test {
         // A regression guard set from the measurement, not from a number that sounded tidy.
         // 1.29M measured; the headroom catches a change that makes an act materially more
         // expensive without failing on noise. The dominant term is the set-call-zero allowance
-        // pair on a cold token, not the window eviction — see bench/RESULTS.md.
+        // pair on a cold token, not the window eviction - see bench/RESULTS.md.
         assertLt(used, 1_400_000, "compound worst case regressed");
     }
 

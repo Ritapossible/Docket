@@ -2,7 +2,7 @@
 # Fails if spec/THREAT-MODEL.md claims a row is covered and no test names its ID.
 #
 # CLAUDE.md: "A threat-model row may not be marked covered until a test references it by ID."
-# This is what makes the honest rows credible — if coverage claims could drift, the
+# This is what makes the honest rows credible - if coverage claims could drift, the
 # "not covered" rows would read as decoration rather than disclosure.
 set -euo pipefail
 

@@ -198,7 +198,7 @@ test("inputHash is order-independent in input but order-dependent in meaning", a
   const b = {blockNumber: 1n, logIndex: 1, topics: ["0x02" as const], data: "0x" as const};
 
   // Events are sorted by (blockNumber, logIndex) before hashing, so the caller's ordering
-  // cannot change the result — which is what makes two independent indexers agree.
+  // cannot change the result - which is what makes two independent indexers agree.
   assert.equal(inputHash([a, b]), inputHash([b, a]));
 
   // But a different event set must hash differently.
@@ -208,8 +208,8 @@ test("inputHash is order-independent in input but order-dependent in meaning", a
 test("a stale asOf block silently changes the score, which is why replay disables caching", () => {
   // Regression note for the bug found by running demo/beat.ts against a live chain: viem
   // caches getBlockNumber, so a replay moments after a denial landed scored the chain as it
-  // was before it. The scorer itself is honest — given the truncated history it returns the
-  // pre-denial number — which is precisely why the truncation had to be fixed upstream.
+  // was before it. The scorer itself is honest - given the truncated history it returns the
+  // pre-denial number - which is precisely why the truncation had to be fixed upstream.
   const asOf = 1_800_000_000n;
   const base = {
     allowedActs: 3n,
