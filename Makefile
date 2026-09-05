@@ -55,6 +55,11 @@ console:
 console-e2e:
 	./console/scripts/e2e.sh
 
+# Serves the build with the production headers from vercel.json, so the CSP can be tested
+# before it ships instead of debugged on a live URL.
+console-serve:
+	node console/scripts/serve-static.mjs
+
 demo:
 	./demo/run.sh
 

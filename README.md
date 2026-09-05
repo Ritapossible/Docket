@@ -56,6 +56,35 @@ sybil resistance is economic rather than cryptographic. `ARCHITECTURE.md` §7 is
 | [`PLAN.md`](PLAN.md) | schedule, definition of done, cut list, risk register |
 | [`CLAUDE.md`](CLAUDE.md) | working rules and conventions for this repo |
 
+## Deploying the console
+
+`vercel.json` at the repository root configures the build. Two things matter, and both will
+waste an afternoon if you get them wrong:
+
+**Leave the project's Root Directory as the repository root.** Do not set it to `console/`. The
+console imports the scorer and the replay from `../../indexer` and the ABI from `../../sdk`, and
+its build generates the threat panel from `spec/THREAT-MODEL.md`. Rooted at `console/`, none of
+those paths exist and the build fails.
+
+**A hosted console cannot reliably reach a local chain.** The page is served over https; a
+browser's mixed-content and private-network protections stand between it and `http://127.0.0.1`,
+and `anvil` does not send the headers that would satisfy them. So point a hosted console at a
+public https RPC:
+
+```
+https://<your-deployment>/?mandate=0x…&rpc=https://testnet-rpc.monad.xyz&from=<deployBlock>
+```
+
+and run the console locally (`npm --prefix console run dev`) when demoing against `anvil`. The
+`from` block is required because public RPCs cap `eth_getLogs` by range — see `spec/DCS-1.md` §7.
+
+The config also sets a Content-Security-Policy, immutable caching for fingerprinted assets, and
+`must-revalidate` on the entry document. `node console/scripts/serve-static.mjs` serves the build
+locally with those exact headers, so the policy can be tested before it ships rather than
+debugged on a live URL.
+
 ## Status
 
-Design complete, implementation starting. Nothing here is deployed yet.
+Contracts, indexer, SDK, demo and console are built and tested. Nothing is deployed to a public
+chain yet, and act-to-finality latency — the measurement the Monad argument rests on — is still
+outstanding.

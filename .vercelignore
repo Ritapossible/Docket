@@ -1,0 +1,11 @@
+# The Vercel root must be the repository root: the console imports from ../../indexer and
+# ../../sdk, and its build reads spec/THREAT-MODEL.md. Setting the project's Root Directory to
+# console/ will fail the build. Everything the build does not need is excluded here instead.
+contracts/out/
+contracts/cache/
+contracts/lib/
+bench/
+demo/
+script/
+remixes/
+*.log
