@@ -64,3 +64,23 @@ export interface ScoreBreakdown {
   breachPpm: bigint;
   twaCapWei: bigint;
 }
+
+export type ActKind = "Allowed" | "Denied" | "WouldDeny" | "Failed";
+
+/**
+ * One decoded act, for surfaces that show the stream rather than the aggregate.
+ *
+ * Addresses are plain strings so this module stays dependency-free and the scorer remains a
+ * pure function over data anyone can construct.
+ */
+export interface ActRecord {
+  kind: ActKind;
+  id: bigint;
+  blockNumber: bigint;
+  timestamp: bigint;
+  txHash: string;
+  target: string;
+  selector: string;
+  value: bigint;
+  rule?: Rule;
+}

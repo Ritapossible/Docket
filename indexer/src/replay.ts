@@ -11,10 +11,19 @@ import {
 
 import {mandateAbi} from "./abi.ts";
 import {inputHash, type HashableLog} from "./inputHash.ts";
-import {RULES, type CapSegment, type Denial, type MandateHistory, type Rule} from "./types.ts";
+import {
+  RULES,
+  type ActRecord,
+  type CapSegment,
+  type Denial,
+  type MandateHistory,
+  type Rule,
+} from "./types.ts";
 
 export interface ReplayResult {
   history: MandateHistory;
+  /** Decoded acts, newest last. The score does not use these; the console does. */
+  acts: ActRecord[];
   inputHash: Hex;
   logCount: number;
   asOfBlock: bigint;
@@ -79,6 +88,7 @@ export async function replay(
   let allowedActs = 0n;
   let firstActTime: bigint | null = null;
   const denials: Denial[] = [];
+  const acts: ActRecord[] = [];
 
   // (timestamp, cap) change points; the mandate starts with no native cap at all.
   const capChanges: Array<{at: bigint; cap: bigint}> = [];
@@ -103,12 +113,27 @@ export async function replay(
       case "Allowed": {
         allowedActs += 1n;
         if (firstActTime === null) firstActTime = at;
+        acts.push(toActRecord("Allowed", decoded.args, log, at));
         break;
       }
       case "Denied": {
         const args = decoded.args as unknown as {rule: number};
-        denials.push({rule: toRule(args.rule), timestamp: at});
+        const rule = toRule(args.rule);
+        denials.push({rule, timestamp: at});
         if (firstActTime === null) firstActTime = at;
+        acts.push({...toActRecord("Denied", decoded.args, log, at), rule});
+        break;
+      }
+      case "WouldDeny": {
+        const args = decoded.args as unknown as {rule: number};
+        acts.push({
+          ...toActRecord("WouldDeny", decoded.args, log, at),
+          rule: toRule(args.rule),
+        });
+        break;
+      }
+      case "Failed": {
+        acts.push(toActRecord("Failed", decoded.args, log, at));
         break;
       }
       case "Tightened": {
@@ -130,6 +155,7 @@ export async function replay(
   }
 
   return {
+    acts,
     history: {
       allowedActs,
       firstActTime,
@@ -140,6 +166,25 @@ export async function replay(
     inputHash: inputHash(logs as unknown as HashableLog[]),
     logCount: logs.length,
     asOfBlock,
+  };
+}
+
+function toActRecord(
+  kind: ActRecord["kind"],
+  args: unknown,
+  log: {blockNumber: bigint | null; transactionHash: Hex | null},
+  timestamp: bigint,
+): ActRecord {
+  const a = args as {id?: bigint; target?: string; selector?: string; value?: bigint};
+  return {
+    kind,
+    id: a.id ?? 0n,
+    blockNumber: log.blockNumber ?? 0n,
+    timestamp,
+    txHash: log.transactionHash ?? "0x",
+    target: a.target ?? "0x",
+    selector: a.selector ?? "0x00000000",
+    value: a.value ?? 0n,
   };
 }
 

@@ -89,3 +89,30 @@ jobs:
       # not reach the score.
       - name: End-to-end beat
         run: RUNS=2 ./demo/run.sh
+
+  console:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund && npm --prefix console install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm --prefix console run build
+
+      - name: Browser
+        run: npx playwright install --with-deps chromium
+
+      # Renders the console against a chain seeded with a real denial and fails if the page
+      # loads but shows nothing — the failure a typecheck cannot see.
+      - name: Render check
+        run: ./console/scripts/e2e.sh

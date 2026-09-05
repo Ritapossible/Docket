@@ -10,3 +10,6 @@ broadcast/
 .DS_Store
 dist/
 .next/
+console/dist/
+console/src/generated/
+console/tsconfig.tsbuildinfo

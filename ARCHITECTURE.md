@@ -370,7 +370,13 @@ policy authoring helpers, and a tool-shim so an agent framework can call it as a
 is the integration point that matters: the agent's own harness sees a normal tool that sometimes
 returns "refused, by this rule".
 
-**Console** (`console/`, Next.js). Live allowed/denied stream over Execution Events; limit
+**Console** (`console/`, Vite + React — *not* Next.js, as an earlier draft of this document
+said). The console reads chain state directly from an RPC in the browser, holds no key and has
+no server of its own, so it deploys as static files; Next's server-side rendering, routing and
+data layer would all sit unused while adding a build and a runtime to maintain. Its visual
+system is documented separately in `console/DESIGN.md`, and its typefaces are vendored rather
+than loaded from a font CDN — a demo must not depend on a third party being reachable from
+wherever it is being shown. Live allowed/denied stream over Execution Events; limit
 controls that take effect in one block; denial rows carrying the rule, the decoded calldata, and
 a persistent **"what this mandate does not protect you from"** panel rendered directly from
 `spec/THREAT-MODEL.md`'s uncovered rows. Shipping the limits in the product, not only the docs,

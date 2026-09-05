@@ -49,6 +49,12 @@ score:
 blockrate:
 	./bench/blockrate.sh
 
+console:
+	npm --prefix console run build
+
+console-e2e:
+	./console/scripts/e2e.sh
+
 demo:
 	./demo/run.sh
 
