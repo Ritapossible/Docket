@@ -176,7 +176,7 @@ the project. Everything above them is presentation.
 | Testnet instability or faucet limits during the demo | any failed deploy | record the demo video early in week 5; keep a funded backup key and a second RPC provider |
 | Execution Events integration is harder than documented | week 4, day 1 | fall back to log polling; the console degrades, the guarantee does not |
 | ERC-8004 draft changes under us | week 3 | pin the revision in `spec/ERC8004.md` and re-check on 10 Oct |
-| "Isn't this just a Safe module?" from a judge | pre-emptive | one rehearsed line: *no permission system treats the refused attempt as a public artifact, and none are built to run inline with an agent acting thirty times a second* |
+| "Isn't this just a Safe module, or ERC-7715?" from a judge | pre-emptive | one rehearsed line: *a permission grant says what an agent may do and has no notion of a refusal - exceeding one is a reverted transaction, and a revert destroys its own logs. Docket records the refusal and scores it.* See §7.1 |
 | Scope creep via U2 | any week-3 work on pools | §5 item 2 already decided it; execute the cut |
 | Console unusable once the mandate has real history | any testnet session slower than local | incremental sync (§9 item 2) is a prerequisite for the deployment, not a follow-up |
 | Age clock never started | no testnet deploy by 6 Sep | the advantage is unrecoverable after the fact; deploy in Observe mode with a throwaway policy rather than waiting for a finished one |
@@ -184,19 +184,99 @@ the project. Everything above them is presentation.
 
 ---
 
-## 7. Adjacent bounties
+## 7. Sponsor bounties
 
-Worth an hour of thought, not a day of work, and only after the definition of done is met.
+Checked against the official list on 9 September; the earlier version of this section was
+written from a partial fetch and was wrong. Track selection is unchanged and unchangeable:
+**Trust, Identity & AI Infrastructure**. Nothing below is worth reopening that.
 
-- **Privy / Dynamic - $5,000 each for best use.** Owner login and agent session-key management
-  are a natural fit and plausibly a single day's integration.
-- Others in the sponsor list are aimed at trading, payments and mobile, and do not fit Docket.
-  Do not contort the project to reach them.
+**The discipline that matters more than the list:** none of this outranks §9 item 1. A project
+that collects four bounties and cannot demonstrate why it needs Monad has optimised the wrong
+thing. Bounties are worth pursuing precisely and only where they are work the project already
+needed.
 
-**Track selection is made once, at application, and cannot be changed.** Trust, Identity & AI
-Infrastructure. Do not revisit this.
+### Tier 1 - real fits that also do work already on the critical path
 
----
+**Envio - Best Use of Envio, $1,000** (plus $5,000 of free Envio Cloud hosting awarded to
+winning teams). This is the best bounty in the list for us because it is not extra work. §9
+item 2 is a P0 blocker: the console re-walks all history every two seconds, which is exactly
+the problem a purpose-built indexer exists to solve. Replacing the hand-rolled replay with an
+Envio HyperIndex is less code than fixing our own, strictly better, and a bounty.
+
+> Do this **as** the incremental-sync fix, not after it.
+
+**Mera - "One Passkey, Many Keys", $2,500, and Best Mera-Powered UX, $2,500.** Monad Foundation
+first-party, which is the strongest kind of sponsor alignment under P1, and it answers the
+objection reviewers actually raise: an autonomous process holding a raw private key.
+
+Mera is a client-side library that derives key material from a passkey and then derives many
+keys from it along HD paths. Applied here that becomes **one passkey, many agents**: the owner
+authenticates with Face ID, each agent gets its own derived signer at its own HD index, and
+rotating an agent is deriving the next index. Nothing is stored on a server, nothing is
+exfiltratable from one, and the owner recovers every agent key on a new device from the passkey
+alone. It composes with `rotateAgent()` and `keyEpoch` exactly as they already exist.
+
+**MetaMask - Best Agent Wallet Plugin, $2,500.** The highest conceptual fit and, read honestly,
+the sharpest prior-art risk in the whole hackathon. See §7.1.
+
+### Tier 2 - cheap, and already planned
+
+- **Privy, $5,000** and **Dynamic, $5,000**, for owner login. Both overlap with Mera; pick one
+  primary rather than bolting on three onboarding SDKs. Mera is first-party and more
+  distinctive, so it should be the primary and one of these the secondary if there is time.
+- **Alchemy, $1,000 in credits.** Close to free if their RPC is what the deployment points at.
+
+### Tier 3 - would make the demo substantially more honest
+
+- **Kimi, $3,000** / **Alibaba Cloud Qwen, $5,000** / **Kepler Hunyuan, $2,000**, all in credits,
+  all for "best builds powered by X". Worth noting what this fixes rather than what it pays: the
+  agent in `demo/beat.ts` is a script that *pretends* to be prompt-injected. Driving it with a
+  real model makes the injection an actual injection. That is a credibility upgrade to the
+  centrepiece of the demo, and the bounty is incidental. Pick one model, not three.
+
+### Tier 4 - no fit, do not contort
+
+Kuru (consumer trading, new markets), Perpl (perps API, analytics and risk), Agora (mobile
+trading, cross-border payments) and Nansen (analytics) all want a trading or analytics product.
+Docket neither trades nor analyses; it constrains whoever does.
+
+**Aurora Intents - any-chain liquidity** is a direct contradiction of the project's own P1
+reasoning. Portability is a virtue everywhere except a protocol-sponsored track, and cross-chain
+support is already on the refused list in `CLAUDE.md`.
+
+**Chainlink CRE** would require an oracle, presumably for caps denominated in dollars rather
+than MON. That is a real feature and a genuinely bad trade here: an oracle breaks "recomputable
+from chain events alone", which is the property DCS-1 rests on, and price bands are already out
+of scope in v1 as threat-model row T12.
+
+**Cleanverse CVI/CVA** - unknown. Someone should read what these are before it is ruled either
+way; it is listed here so it is not silently skipped.
+
+Not bounties: ack3's security scan, and the Chainstack, Crouton, Zerion and Envio hosting
+prizes, are all awarded *to* winning teams rather than competed for.
+
+### 7.1 MetaMask, and the prior art that comes with it
+
+MetaMask's Agent Wallet grants an AI agent "narrow, revocable permissions" built on their
+Delegation Toolkit - ERC-7715 for requesting scoped permissions, ERC-7710 for redeeming the
+delegation on chain. The canonical example is *spend up to 10 USDC per day for 30 days*.
+
+That is the same problem Docket solves, shipped, by MetaMask, with a bounty at this hackathon.
+Pretending otherwise would be the worst possible move. Three consequences:
+
+1. **ERC-7715 and ERC-7710 belong in the prior-art list**, next to Safe modules and Rhinestone.
+   They are the most credible version of the objection and the one a judge is most likely to
+   raise, because a sponsor is standing behind it.
+2. **The differentiator survives, and is sharper against a delegation system than against a Safe
+   module.** A permission grant says what an agent *may* do. It has no notion of a refusal: an
+   agent that exceeds an ERC-7715 permission simply gets a failed transaction, and a revert
+   destroys its own logs. That is precisely the failure invariant I2 exists to avoid. Docket is
+   the record layer a delegation system does not have, and the reputation is derived from
+   enforcement rather than asserted.
+3. **The plugin is therefore complementary, not competitive.** A MetaMask Smart Account owns the
+   mandate and grants the agent its scope through Advanced Permissions; Docket records what
+   happened and what was refused, and scores it. That framing wins the bounty and answers the
+   prior-art question in the same breath.
 
 ## 8. Submission checklist - 12 October
 
@@ -250,7 +330,9 @@ needs 9,850. The strategy that makes the project strong is the same thing that b
 
 ### P1 - high impact, cheap, no blockers
 
-**3. Answer "isn't this a Safe module?" in the first fifteen seconds.** Prior art is dense and
+**3. Answer "isn't this a Safe module, or ERC-7715?" in the first fifteen seconds.** Prior art is
+dense - and MetaMask's Agent Wallet ships the closest version of it, with a bounty at this very
+hackathon (§7.1). Prior art is dense and
 the denial-as-artifact distinction is subtle. It belongs in the README's opening lines, the
 console hero and the first slide of the demo video, not in minute three.
 

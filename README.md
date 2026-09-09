@@ -27,6 +27,30 @@ Every other approach hides the refusal - an enclave denies silently, a ZK gate l
 by construction. Docket makes being stopped into evidence you can show someone, which is what
 makes reputation possible at all.
 
+## "Isn't this a permission system?"
+
+The first question anyone asks, and it deserves an answer before anything else.
+
+Bounded agent authority is crowded and some of it is very good. MetaMask's Agent Wallet grants
+an agent narrow, revocable permissions through the Delegation Toolkit - ERC-7715 to request a
+scoped permission, ERC-7710 to redeem it. Safe allowance modules, ERC-4337 session keys and
+Rhinestone's smart sessions all bound what an agent may spend.
+
+**The difference is not the bound. It is the record.**
+
+A permission grant says what an agent *may* do, and has no notion of a refusal. An agent that
+exceeds an ERC-7715 permission gets a reverted transaction, and a revert destroys its own logs:
+nothing durable is left behind saying what was attempted. The strongest alternatives are worse
+still - an attested enclave denies silently, and a ZK gate leaves no trace by construction.
+
+Docket keeps the refusal. Every attempt outside the policy is a permanent public event carrying
+the rule that fired and the calldata that was attempted, and that record is what the reputation
+is computed from. A permission system tells you what an agent was allowed to do. Docket tells
+you what it tried.
+
+These are complementary rather than competing. A smart account can hold the mandate and grant
+the agent its scope; Docket is the layer underneath that keeps the evidence.
+
 ## Why it needs Monad
 
 At 300ms blocks and 600ms finality a policy check can sit synchronously in an agent's loop, and
