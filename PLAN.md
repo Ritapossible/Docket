@@ -272,6 +272,35 @@ security product with no disclosure policy is a bad look for the sake of ten min
 **7. Accessibility pass** (§10.8): `aria-live` on the act stream, skip link, `:focus-visible`,
 `prefers-reduced-motion`.
 
+### P1b - from the Latch review (added 9 Sep)
+
+Full analysis in `ARCHITECTURE.md` §11. Ranked by what they buy for what they cost, and slotted
+here rather than at the top because none of them outrank a live deployment.
+
+**7b. The held act - the missing middle tier.** Docket is allow/deny. A legitimate payment above
+the cap has no path except a policy loosening that is timelocked for an hour and then leaves the
+mandate permanently weaker. A held act records the exact action on chain, waits for the owner's
+approval bound to those exact arguments, and expires by itself. It is strictly safer than the
+loosening it replaces, which is why it can be instant.
+
+This is the largest single product gap and the best demo upgrade available: injection gets
+refused, a real payment gets held, the owner approves from a phone, it executes. Three outcomes
+on stage instead of two, all on chain.
+
+> **Exit:** `Held` / `approve` / expiry implemented and tested; the demo beat shows all three
+> outcomes; DCS-2 drafted for the fourth outcome (never retrofitted into DCS-1).
+
+**7c. Action classes in the SDK and console** (§11.2). The contract takes `(target, selector)`
+pairs, which nobody hand-authors. A class layer above it - read, send, transfer-value - compiles
+a readable policy into the pairs the contract already understands, changes no on-chain
+semantics, and removes the actual barrier to anyone using this.
+
+> **Exit:** a policy can be written in classes and compiles to the same allowlist the contract
+> enforces, with a test asserting the compilation is exact.
+
+**7d. Leases** (§11.3): a bounded loosening that expires by itself, rather than a permanent one
+guarded by a delay. Small contract addition, and the safer instrument for the common case.
+
 ### P2 - the professional bar for a security product
 
 **8. Stateful invariant tests** (§10.2). Unit tests assert scenarios; a guard needs properties
@@ -294,6 +323,8 @@ clean.
 ### P3 - if there is time, and there will not be
 
 12. SDK packaging so it is installable (§10.6).
+11b. Approval delivery to a phone (Telegram or similar), so the held-act demo lands as a real
+    workflow rather than a second browser tab. Cheap, and only worth doing once 7b exists.
 13. Migration procedure written down (§10.9).
 14. Differential TS/Solidity policy evaluator - the oracle form, cut in week 5.
 15. Secrets check in CI (§10.10).

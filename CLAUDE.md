@@ -67,6 +67,10 @@ write-up, and drift between them is expensive.
 Each of these has been considered and rejected. Reopening one requires a reason that has
 changed, not a fresh preference.
 
+- **LLM-evaluated policies.** Conditions written in prose and judged by a model at decision
+  time. This breaks I6 and destroys the property the project rests on: that a third party can
+  recompute every decision and get the same answer. Latch offers this and it is the one part of
+  their design not to copy (`ARCHITECTURE.md` §11.5).
 - **Cross-chain support.** Portability is a virtue everywhere except a protocol-sponsored track.
   It actively weakens the submission.
 - **A token.** Nothing in the design needs one.

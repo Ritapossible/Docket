@@ -588,3 +588,103 @@ history, the age term resets with it, and the anti-sybil story quietly dies.
 `demo/beat.ts` uses anvil's well-known deterministic keys. They are public and must never touch a
 funded network. The deploy script reads from the environment, which is right; what is missing is
 a CI check that no key material is committed, and a line in the README saying so plainly.
+
+---
+
+## 11. What to take from Latch, and what not to
+
+Latch (`github.com/latchagent/latch`, MIT) is an open-source proxy that sits between an AI agent
+and its MCP tools and enforces policy on tool calls. It solves an adjacent problem to Docket's
+at a different layer, and reading it is worth the hour. Notes below are from the source, not
+the marketing site.
+
+**One correction against the record.** Public summaries describe a "Merkle-chained audit trail"
+with an "Ed25519 signature". Neither appears anywhere in the repository - the audit log is a
+database table. That matters for the comparison below, so it is stated rather than assumed.
+
+### Where the two differ, structurally
+
+| | Latch | Docket |
+| --- | --- | --- |
+| Layer | off-chain proxy in front of tool calls | on-chain gate in front of funds |
+| Scope | any MCP tool: files, shells, emails, payments | value only |
+| Enforcement | the agent must be routed through it | the funds cannot leave any other way |
+| Record | rows in a database the operator controls | events on a chain nobody can rewrite |
+| Decisions | **allow / require approval / deny** | allow / deny |
+
+Two of those rows are Docket's advantage and should stay in the pitch. A proxy constrains an
+agent that goes through it; an agent that does not, is not constrained. And an audit log its own
+operator can edit is a different kind of evidence from one that cannot be edited by anyone.
+
+The last row is Latch's advantage, and it is a real gap.
+
+### 11.1 The missing middle: a held act
+
+Docket is binary. A payment that is legitimate but larger than the standing cap has no path at
+all except a policy loosening, which is timelocked for an hour and then leaves the mandate
+permanently weaker. Latch's middle tier - *require approval* - is the right answer, and it maps
+onto the on-chain model cleanly.
+
+**Design.** Each asset policy gains a `reviewCap` above `perActionCap`. An act between the two is
+neither allowed nor refused: it is **held**.
+
+- `act()` records the action under `pendingActs[id]` - target, value, declared outflows, calldata
+  hash - emits `Held`, and returns false. No revert, so I2 holds.
+- The owner calls `approve(id)` within `reviewWindow`. The contract re-checks that the recorded
+  calldata hash still matches and executes exactly the action that was held. The approval is
+  **argument-bound and single-use**, which is Latch's approval-token property expressed on chain
+  rather than in a server's memory.
+- An unapproved act expires and is recorded as expired.
+
+This does not weaken I3. An approval is per-action, bound to exact arguments, and expires by
+itself, so it is strictly safer than the standing-policy loosening it replaces - which is
+precisely why it can be instant while a loosening stays timelocked.
+
+DCS-1 needs a fourth outcome. Held-then-approved scores as an allowed act; held-then-expired is a
+soft breach at most, because failing to get approval is not an attempt to exceed authority. This
+is a DCS-2 change and must not be smuggled into DCS-1.
+
+### 11.2 Action classes
+
+Latch classifies every call into READ / WRITE / SEND / EXECUTE / SUBMIT / TRANSFER_VALUE and
+attaches a default decision per class. Docket's policy is a set of `(target, selector)` pairs,
+which is precise and effectively unwritable by a human: nobody hand-authors function selectors.
+
+A class layer belongs **above** the contract, in the SDK and console, compiling a readable policy
+into the pairs the contract already understands. It changes no on-chain semantics and makes the
+policy authorable, which is the actual barrier to anyone using this.
+
+### 11.3 Leases
+
+Latch has time-boxed grants. Docket has a permanent policy plus a one-hour timelock in one
+direction. A lease is the safer instrument for the common case - "allow this for the next thirty
+minutes" - because it reverts by itself and cannot be forgotten. Worth adding as a bounded
+loosening whose expiry is part of the grant.
+
+### 11.4 Rule specificity
+
+Latch resolves overlapping rules by a deterministic specificity key rather than by insertion
+order. Docket has no overlap today because a policy lookup is a single mapping read, but classes
+(11.2) would introduce one, and the ordering has to be decided before that lands, not after.
+
+### 11.5 What not to take
+
+**LLM-evaluated policies.** Latch supports conditions written in plain English and evaluated by a
+model at decision time (`lib/proxy/smart-rules.ts`). Docket must not do this. It breaks I6 - the
+model translates, a human approves, and the engine decides - and it destroys the property the
+whole project rests on, that a third party can recompute every decision and get the same answer.
+Latch's own deterministic classifier carries the comment *"Classification must be deterministic.
+No AI/ML in this path"*, which is the same instinct applied one layer down; the smart-rule path
+is where they relaxed it and where Docket should not follow.
+
+**The proxy architecture itself.** Different layer, different threat model. Docket's claim is
+that there is no path around the gate; adopting a design an agent can simply not route through
+would give that up.
+
+### 11.6 Where Docket is already ahead, and should stay there
+
+Worth writing down so it does not get traded away in the rush to match features: enforcement
+that cannot be bypassed, a record its operator cannot edit, a score any third party can
+recompute byte-identically, and a threat model where every claimed row is gated on a test that
+names it. None of those are things Latch has, and all of them are cheaper to keep than to
+rebuild.
