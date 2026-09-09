@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Ritapossible/Docket/security/advisories/new
+    about: Do not open a public issue for a flaw in the contracts. Report it privately.
+  - name: Architecture and design decisions
+    url: https://github.com/Ritapossible/Docket/blob/main/ARCHITECTURE.md
+    about: The invariants, the threat model, and the questions still open.

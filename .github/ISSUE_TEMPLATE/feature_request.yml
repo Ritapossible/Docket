@@ -1,0 +1,26 @@
+name: Feature request
+description: Propose a change to what Docket does.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check `ARCHITECTURE.md` §9 to §11 first. Several things are deliberately not built, and
+        a few are deliberately refused - LLM-evaluated policies, cross-chain support and
+        upgradeable mandates all have reasons written down.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: Whose problem, and what they do today instead.
+    validations: {required: true}
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The proposal
+    validations: {required: true}
+  - type: textarea
+    id: invariants
+    attributes:
+      label: Effect on the invariants
+      description: Does it touch I1 to I6 in `ARCHITECTURE.md` §1? If so, how does it hold them?

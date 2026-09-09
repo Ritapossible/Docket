@@ -21,6 +21,9 @@ fmt:
 fmt-check:
 	forge fmt --check
 
+lint:
+	npm run lint
+
 gas:
 	forge test --gas-report
 

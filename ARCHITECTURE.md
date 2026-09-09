@@ -681,7 +681,30 @@ is where they relaxed it and where Docket should not follow.
 that there is no path around the gate; adopting a design an agent can simply not route through
 would give that up.
 
-### 11.6 Where Docket is already ahead, and should stay there
+### 11.6 Repository conventions taken from Latch
+
+Their repo carries the furniture a project needs to be picked up by someone who did not write
+it, and most of it was missing here. Added 9 September: `LICENSE` (the manifest claimed MIT with
+no licence file), `SECURITY.md` with a private disclosure route and an explicit scope,
+`CONTRIBUTING.md`, `TESTING.md`, issue and pull-request templates, and CI hardening - a
+concurrency group so a superseded run is cancelled rather than queued, and a timeout on every
+job.
+
+The substantive one is **TypeScript linting**, which did not exist. The contracts had `forge fmt`
+and `forge lint` from the first commit while the SDK, indexer and console had nothing checking
+them but `tsc`. The config is syntactic rather than type-aware, because the three packages use
+different tsconfigs and `tsc --noEmit` already runs per package in CI; on top of the recommended
+set it forbids `any`, `var` and loose equality, and enables the React hooks rules, which catch
+the specific bug where a polling hook fetches once and never refreshes. It reports clean across
+21 files, and the config was verified against a deliberate violation rather than trusted to be
+looking.
+
+Deliberately not adopted: npm workspaces, and a Mintlify docs site. Both are more standard than
+what is here and both are queued rather than done - workspaces changes module resolution across
+package boundaries the console depends on, and neither is worth spending a testnet deployment's
+worth of time on.
+
+### 11.7 Where Docket is already ahead, and should stay there
 
 Worth writing down so it does not get traded away in the rush to match features: enforcement
 that cannot be bypassed, a record its operator cannot edit, a score any third party can

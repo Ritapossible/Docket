@@ -1,0 +1,36 @@
+name: Bug report
+description: Something behaves differently from what the docs or the specs say.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a security flaw in the contracts, do not use this form. See `SECURITY.md`.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [contracts, indexer / DCS-1, sdk, console, demo, docs]
+    validations: {required: true}
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened
+      description: Quote the spec or doc that says so, if there is one.
+    validations: {required: true}
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Paste the output. A failing test is the most useful form of this.
+    validations: {required: true}
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+    validations: {required: true}
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse --short HEAD`.

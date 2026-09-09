@@ -266,8 +266,8 @@ verified explorer link, committed.
 > **Exit:** killing the RPC mid-session shows a clear stale state rather than a blank page or a
 > confident lie.
 
-**6. `LICENSE` and `SECURITY.md`.** `package.json` claims MIT and no licence file exists. A
-security product with no disclosure policy is a bad look for the sake of ten minutes.
+**6. ~~`LICENSE` and `SECURITY.md`~~ - done 9 Sep**, along with CONTRIBUTING, TESTING, issue and
+PR templates, TypeScript linting and CI hardening, from the Latch repo review.
 
 **7. Accessibility pass** (§10.8): `aria-live` on the act stream, skip link, `:focus-visible`,
 `prefers-reduced-motion`.
@@ -323,6 +323,13 @@ clean.
 ### P3 - if there is time, and there will not be
 
 12. SDK packaging so it is installable (§10.6).
+12b. npm workspaces at the root. Four packages with four `node_modules` is not how a monorepo is
+    normally laid out, and `npm install && npm --prefix console install` should be one command.
+    Deferred rather than done because hoisting changes module resolution and the console
+    imports across package boundaries, so it needs the full pipeline re-verified and a Vercel
+    redeploy to prove out. Low value, non-trivial risk.
+12c. A docs site. The specs are good and the entry points are scattered; Latch groups theirs
+    into Getting Started / Core Concepts / Reference and it reads far better for a stranger.
 11b. Approval delivery to a phone (Telegram or similar), so the held-act demo lands as a real
     workflow rather than a second browser tab. Cheap, and only worth doing once 7b exists.
 13. Migration procedure written down (§10.9).

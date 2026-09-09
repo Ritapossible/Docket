@@ -4,17 +4,29 @@
   "type": "module",
   "description": "An AI agent's reputation, computed from what a contract actually let it do.",
   "scripts": {
-    "demo": "node --experimental-strip-types demo/beat.ts",
+    "demo": "./demo/run.sh",
+    "lint": "eslint sdk/src indexer/src console/src demo",
+    "lint:fix": "eslint sdk/src indexer/src console/src demo --fix",
     "typecheck": "tsc -p sdk/tsconfig.json --noEmit && tsc -p indexer/tsconfig.json --noEmit",
-    "test:dcs1": "node --experimental-strip-types --test indexer/test/*.test.ts"
+    "test:dcs1": "node --experimental-strip-types --test indexer/test/*.test.ts",
+    "console:build": "npm --prefix console run build",
+    "console:e2e": "./console/scripts/e2e.sh"
   },
   "dependencies": {
     "viem": "^2.21.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.0.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "playwright": "^1.63.0",
-    "typescript": "^5.6.0"
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.70.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ritapossible/Docket.git"
+  }
 }

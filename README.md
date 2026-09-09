@@ -74,9 +74,25 @@ sybil resistance is economic rather than cryptographic. `ARCHITECTURE.md` §7 is
 
 | | |
 | --- | --- |
-| [`ARCHITECTURE.md`](ARCHITECTURE.md) | invariants, contracts, off-chain design, threat model |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | invariants, contracts, off-chain design, threat model, known gaps |
+| [`spec/DCS-1.md`](spec/DCS-1.md) | the scoring spec: inputs, terms, `inputHash`, verification |
+| [`spec/THREAT-MODEL.md`](spec/THREAT-MODEL.md) | every attack, its defence, and whether a test covers it |
+| [`spec/ERC8004.md`](spec/ERC8004.md) | the pinned standard revision and where Docket deviates |
+| [`TESTING.md`](TESTING.md) | the six test layers and what each one catches |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | setup, the pre-PR checks, and the house rules |
+| [`SECURITY.md`](SECURITY.md) | scope, and how to report a flaw privately |
+| [`bench/RESULTS.md`](bench/RESULTS.md) | measurements, and an explicit list of what is not measured |
 | [`PLAN.md`](PLAN.md) | schedule, definition of done, cut list, risk register |
-| [`CLAUDE.md`](CLAUDE.md) | working rules and conventions for this repo |
+| [`console/DESIGN.md`](console/DESIGN.md) | the console's design system and responsive rules |
+
+## Try it
+
+```bash
+make demo
+```
+
+Starts a local chain, deploys a mandate, and shows an agent being prompt-injected and refused on
+chain. Exits non-zero if the guarantee fails.
 
 ## Deploying the console
 
