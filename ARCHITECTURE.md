@@ -459,8 +459,17 @@ Resolve by the date given; a decision recorded here beats a decision rediscovere
 - **Should the guardian role be permissionless with a bond?** (by end of week 3). Anyone may
   pause, forfeiting a bond if the pause was unjustified. Strictly more robust, and introduces a
   griefing surface and a second market to design.
-- **Relayed and sponsored `act()`** (deferred to v2). v1 requires the agent to hold gas and call
-  directly. EIP-712 signatures plus a nonce would allow relaying, and add replay surface.
+- **What the agent signs with** (v2). `act()` authorises by `msg.sender`, so the agent controls
+  an ordinary EOA today. The guarantee does not depend on this - a stolen agent key inherits the
+  mandate's bounds and nothing more (T2) - but the storage of the key is still a real operational
+  question, and "an autonomous process holding a raw private key" is a fair thing for a reviewer
+  to object to. Three directions, none of which change the contract's authorisation model:
+  EIP-712 intents plus a relayer, so the agent signs but never holds gas and the signer can be
+  rotated freely (this adds replay surface and needs a nonce); a smart account with ERC-1271, so
+  the agent's authority is itself a contract with its own scoping; or a P256/WebAuthn key in
+  secure hardware, which is non-exfiltratable and is one of the Metropolis track's own example
+  ideas. The last is the most interesting and the least work to *demonstrate*, since the mandate
+  only cares which address calls it.
 - **ERC-8004 revision drift.** The standard is a draft. Pin it, and re-check before submission.
 - **`Mandate` size headroom.** 2,340 B under EIP-170 as of week 1. Week 3 adds ERC-8004
   publication to this contract; if that headroom runs out, the owner-facing policy mutators

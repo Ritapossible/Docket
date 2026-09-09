@@ -51,9 +51,10 @@ export function App() {
           <span className="accent">what a contract actually let it do</span>.
         </h1>
         <p className="lede" style={{marginTop: 22}}>
-          A mandate holds the funds and the policy. The agent holds a key that can call exactly
-          one function. Every attempt it makes - allowed or refused - is a permanent public
-          record, and the refusals are what the score is built from.
+          A mandate holds the funds and the policy. The agent holds neither: it is granted
+          permission to call one function, and stealing that permission gets an attacker nothing
+          the agent could not already do. Every attempt - allowed or refused - is a permanent
+          public record, and the refusals are what the score is built from.
         </p>
 
         <div style={{marginTop: 34}}>
