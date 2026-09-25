@@ -77,10 +77,32 @@ jobs:
         run: npx tsc -p tsconfig.json --noEmit
 
       # Vectors are hand-computed from spec/DCS-1.md, so this checks the implementation
-      # against the spec rather than against itself.
+      # against the spec rather than against itself. Named explicitly rather than globbed:
+      # published.test.ts needs a live chain and belongs in its own job, and a glob would have
+      # quietly pulled it into what is meant to be the fast offline run.
       - name: DCS-1 conformance
         working-directory: indexer
-        run: node --experimental-strip-types --test test/*.test.ts
+        run: node --experimental-strip-types --test test/dcs1.test.ts
+
+  # T13 - "the indexer publishes a false score". Recomputes every DCS-1 entry on the ERC-8004
+  # registry from a cold sync and fails if any published number does not reproduce. Its own job
+  # because it needs a live testnet: an RPC outage should read as an RPC outage, not as a
+  # contract regression buried in another job's log.
+  published:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Published scores recompute
+        run: npm run test:published
 
   demo:
     runs-on: ubuntu-latest

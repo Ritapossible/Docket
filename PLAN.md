@@ -43,8 +43,8 @@ Docket is submittable when all of the following are true. This list does not gro
 - [ ] The loosening timelock and the tightening partial order are implemented and tested in both directions.
 - [ ] The balance assertion holds against a deliberately malicious target contract in the test suite.
 - [ ] `spec/THREAT-MODEL.md`: every row is either linked to a passing test or explicitly marked not covered.
-- [ ] `docket score --verify` reproduces a published score byte-identically from a cold sync.
-- [ ] A DCS-1 entry written to and readable from the ERC-8004 registries.
+- [x] `docket score --verify` reproduces a published score byte-identically from a cold sync. `npm run test:published`, which is also what discharges T13.
+- [x] A DCS-1 entry written to and readable from the ERC-8004 registries. agentId 1930, score 372 at block 65649670.
 - [ ] `bench/RESULTS.md` published with a reproduction script.
 - [ ] The demo beat runs end to end, unattended, from a single script.
 - [ ] README, write-up, and a demo video under three minutes.

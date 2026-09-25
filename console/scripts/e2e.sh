@@ -9,6 +9,22 @@ PORT_CHAIN="${PORT_CHAIN:-8545}"
 PORT_WEB="${PORT_WEB:-4173}"
 
 command -v anvil >/dev/null || { echo "anvil not found: https://getfoundry.sh"; exit 1; }
+
+# Prefer a preinstalled Chromium when the image has one. Playwright refuses to launch a browser
+# whose build number does not match the npm package's expectation, and an `npm install` that
+# bumps @playwright/test breaks this run with an install prompt rather than a useful error.
+# Pinning the path here keeps the e2e self-contained instead of depending on the caller's env.
+if [ -z "${PLAYWRIGHT_CHROMIUM_PATH:-}" ]; then
+  for candidate in \
+    "${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}/chromium/chrome-linux/chrome" \
+    "${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}/chromium" ; do
+    if [ -x "$candidate" ]; then
+      export PLAYWRIGHT_CHROMIUM_PATH="$candidate"
+      break
+    fi
+  done
+fi
+[ -n "${PLAYWRIGHT_CHROMIUM_PATH:-}" ] && echo "chromium: $PLAYWRIGHT_CHROMIUM_PATH"
 [ -f contracts/out/Mandate.sol/Mandate.json ] || forge build
 
 anvil --silent --port "$PORT_CHAIN" &

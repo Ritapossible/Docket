@@ -1,0 +1,54 @@
+name: publish dcs-1
+
+# Publishes the showcase mandate's DCS-1 score to the ERC-8004 Reputation Registry.
+#
+# Separate from the agent workflow, and on a separate key, because the two roles are separate.
+# The agent acts; the publisher measures. The registry refuses feedback from the identity's
+# owner or operators, so the account that posts a score provably does not control the thing it
+# is scoring. Running this as its own job with its own secret keeps that true operationally as
+# well as on chain.
+#
+# Requires one repository secret: PUBLISHER_PRIVATE_KEY (testnet only).
+# Settings -> Secrets and variables -> Actions -> New repository secret.
+
+on:
+  schedule:
+    # Once a day. A DCS-1 score is pinned to a block height, so republishing more often just
+    # adds entries that say the same thing - the age term moves in days, not minutes.
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-dcs1
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Publish
+        env:
+          PUBLISHER_PRIVATE_KEY: ${{ secrets.PUBLISHER_PRIVATE_KEY }}
+          MONAD_TESTNET_RPC: https://testnet-rpc.monad.xyz
+        run: |
+          if [ -z "$PUBLISHER_PRIVATE_KEY" ]; then
+            echo "PUBLISHER_PRIVATE_KEY is not set - add it as a repository secret."
+            exit 1
+          fi
+          node --experimental-strip-types script/publish.mjs --execute
+
+      - name: Verify the published score recomputes
+        # The point of publishing is that anyone can check it. Checking it ourselves, from a
+        # cold sync, in the same run that wrote it, is the cheapest version of that promise -
+        # and it is what discharges T13 in the threat model.
+        run: npm run test:published

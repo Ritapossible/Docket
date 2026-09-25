@@ -173,5 +173,15 @@ on testnet. That is a policy check that fits inside an agent's action loop. See
 Contracts, indexer, SDK, demo and console are built, tested, and deployed to Monad testnet. The
 latency measurement the Monad argument rests on is done and published above.
 
-Outstanding: the ERC-8004 identity and reputation entries, a scheduled agent driving the
-showcase mandate continuously, and the demo video.
+The showcase mandate is registered as ERC-8004 **agentId 1930** and its DCS-1 score is published
+to the Reputation Registry, where the console reads it in three calls rather than walking the
+mandate's whole history. A scheduled workflow keeps the mandate acting every eight hours and
+republishes the score daily, so the age term - the one part of DCS-1 that cannot be bought -
+accrues whether or not anyone is watching.
+
+Three keys, three jobs, and the chain enforces the split rather than trusting it: the owner
+holds policy and the identity, the agent can call `act()` and nothing else, and the publisher
+posts scores while owning nothing. The registry rejects feedback from an identity's own owner,
+so the score on chain provably was not self-awarded.
+
+Outstanding: the demo video and the submission write-up.

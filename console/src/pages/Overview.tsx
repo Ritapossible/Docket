@@ -5,10 +5,13 @@ import {Eyebrow, Panel, Stat} from "../components/Sections.tsx";
 import {href} from "../router.ts";
 import type {Connection, MandateView} from "../lib/chain.ts";
 import {formatEth, shortAddress} from "../lib/format.ts";
+import {usePublishedScore} from "../lib/published.ts";
 
 const TESTNET = {
   showcase: "0x2EC195646731F274c0e500f3B671C04189446Ae9",
   deployBlock: "65577709",
+  /** ERC-8004 identity for the showcase mandate. Its DCS-1 scores are read from the registry. */
+  agentId: 1930n,
   rpc: "https://testnet-rpc.monad.xyz",
   explorer: "https://testnet.monadexplorer.com/address/0x2EC195646731F274c0e500f3B671C04189446Ae9",
 };
@@ -26,6 +29,13 @@ export function Overview({
   onConnect: (c: Connection) => void;
   onDisconnect: () => void;
 }) {
+  // Read the published score whatever the local sync is doing. When the browser can compute
+  // the score itself the two should agree, and when it cannot this is the only number on offer.
+  const published = usePublishedScore(
+    connection?.rpc ?? TESTNET.rpc,
+    connection?.mandate.toLowerCase() === TESTNET.showcase.toLowerCase() ? TESTNET.agentId : null,
+  );
+
   const liveHref = `${window.location.pathname}?mandate=${TESTNET.showcase}&rpc=${encodeURIComponent(TESTNET.rpc)}&from=${TESTNET.deployBlock}`;
 
   return (
@@ -96,6 +106,7 @@ export function Overview({
               syncedFrom={view.syncedFrom}
               mandate={connection.mandate}
               fromBlock={connection.fromBlock}
+              published={published}
             />
           </div>
         </section>

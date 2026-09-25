@@ -12,7 +12,30 @@
   "accounts": {
     "owner": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
     "agent": "0x0536468C3565198672Ad61A178f822C3D997c65C",
-    "guardian": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579"
+    "guardian": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
+    "publisher": "0xA5F16dB3bA4385F80c368a0f1110c97f8eC68001"
+  },
+  "accountNote": "Three keys, three jobs. The owner holds policy and the ERC-8004 identity and is not in CI. The agent can call act() and nothing else and lives in a GitHub Actions secret. The publisher posts DCS-1 scores, owns nothing, and could be replaced by any stranger running the same indexer. The registry enforces the last split rather than trusting it: giveFeedback reverts with 'Self-feedback not allowed' for the identity's owner or operators.",
+  "erc8004": {
+    "identityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+    "reputationRegistry": "0x8004B663056A597Dffe9eCcC1965A193B7388713",
+    "addressNote": "Verified with cast code, not taken from documentation. Monad's own guide at docs.monad.xyz/guides/erc-8004 still lists 0x8004A169... and 0x8004BAa1..., which have no code on any RPC. A call to an address with no code succeeds and returns empty instead of reverting, so publishing there would have failed silently.",
+    "agentId": 1930,
+    "agentURI": "https://raw.githubusercontent.com/Ritapossible/docket/main/console/public/agent-card.json",
+    "identityOwner": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
+    "agentWallet": "0x0536468C3565198672Ad61A178f822C3D997c65C",
+    "registerTx": "0x35c5d64e20a63118725010a2acbebe9c9f7f1eab52a5b952a272323b4a86ad3d",
+    "registerBlock": 65649252,
+    "setAgentWalletTx": "0x33a146c661ea1d702332a689c2bbcd348c80a4b306c7dce0c65ec4ca18a9d565",
+    "firstPublication": {
+      "tx": "0x247e6e8a524da3e49ec358910c14f2375db17e0b1766cfc6c0e1a968f90333e0",
+      "block": 65649813,
+      "score": 372,
+      "atBlock": 65649670,
+      "inputHash": "0x392cf9c19ca7844510c4c51641856beba4e1161ff041b0d881df45972ce52e73",
+      "tag1": "docket:dcs-1"
+    },
+    "verify": "npm run test:published"
   },
   "mandates": {
     "showcase": {

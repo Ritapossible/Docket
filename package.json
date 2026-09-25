@@ -8,9 +8,10 @@
     "lint": "eslint sdk/src indexer/src console/src demo script bench",
     "lint:fix": "eslint sdk/src indexer/src console/src demo script bench --fix",
     "typecheck": "tsc -p sdk/tsconfig.json --noEmit && tsc -p indexer/tsconfig.json --noEmit",
-    "test:dcs1": "node --experimental-strip-types --test indexer/test/*.test.ts",
+    "test:dcs1": "node --experimental-strip-types --test indexer/test/dcs1.test.ts",
     "console:build": "npm --prefix console run build",
-    "console:e2e": "./console/scripts/e2e.sh"
+    "console:e2e": "./console/scripts/e2e.sh",
+    "test:published": "node --experimental-strip-types --test indexer/test/published.test.ts"
   },
   "dependencies": {
     "viem": "^2.21.0"

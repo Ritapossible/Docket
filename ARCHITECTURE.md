@@ -320,12 +320,34 @@ chain and reproduces the number byte-identically or fails loudly. This is the wh
 
 Identity registry: one entry per mandate, binding `agentId ↔ mandate address ↔ owner`.
 Reputation registry: the DCS-1 tuple above. The standard is a draft; `spec/ERC8004.md` pins the
-exact revision implemented and records where Docket deviates.
+exact revision implemented, the verified addresses, and records where Docket deviates.
 
 What Docket contributes that the standard leaves open is the *provenance* of the reputation.
 ERC-8004's reputation entries are typically client feedback - subjective, solicitable, and worth
 what any review is worth. A DCS-1 entry is a deterministic function of enforced behaviour, and
 the enforcement is the same contract that produced the evidence.
+
+**Three keys, and the registry enforces the separation.** `giveFeedback` reverts with
+`Self-feedback not allowed` for the identity's owner or operators, so the account that posts a
+score cannot be the account that controls the agent:
+
+| Key | Can do | Cannot do |
+| --- | --- | --- |
+| owner | policy, pause, the identity NFT, `setAgentURI` | call `act()`; post a score |
+| agent | `act()` on the mandate | change policy; change the identity |
+| publisher | post a DCS-1 score anyone can recompute | anything else at all |
+
+This was not a design Docket chose and then justified - the registry refused the simpler
+arrangement, and the refusal turned out to be the same argument Docket makes about agents. A
+score you can award yourself is a claim; a score your own key is structurally barred from
+writing is closer to a measurement. The publisher is deliberately replaceable: anyone running
+the same indexer can post a competing entry for the same mandate, they should agree, and a
+disagreement localises to a specific event set via `inputHash`.
+
+**The console reads the published score rather than computing it.** Computing in the browser
+means walking the mandate's whole history, which grows without bound; reading the registry is
+three calls at any age. The local replay stays, because it is what lets a reader disbelieve the
+published number, and `npm run test:published` runs exactly that check in CI.
 
 ### 4.4 Differential evaluation
 

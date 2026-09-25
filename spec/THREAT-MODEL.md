@@ -21,16 +21,35 @@ optimism. Rows marked **partial** or **not covered** are real and are rendered i
 | T10 | A compromised key spams denials to tank the mandate's score | the agent pays gas for its own refusals; DCS-1 separates hard from soft breaches | partial |
 | T11 | Sybil - abandon a tarnished mandate and deploy a fresh one | economic only: DCS-1 weights age and time-weighted capital, neither of which can be accelerated | partial, by design |
 | T12 | Oracle manipulation against price-band rules | price bands are out of scope in v1 | n/a in v1 |
-| T13 | The indexer publishes a false score | anyone recomputes from events; `inputHash` is published with every score | partial |
+| T13 | The indexer publishes a false score | anyone recomputes from events; `inputHash` is published with every score | covered |
 | T14 | The public denial log leaks the agent's strategy | none in v1; commit-then-reveal calldata is future work | not covered |
 
-## Notes on the partial rows
+## T13, and what discharged it
 
-**T13.** The indexer exists and DCS-1 is pinned by 15 vectors hand-computed from the spec, so
-recomputation is real rather than designed. It is **partial** rather than covered for one
-specific reason: nothing has been published to the ERC-8004 registry yet, so there is no
-published score for a third party to disagree with. It becomes covered when `docket score
---verify` reproduces a score published on testnet from a cold sync, with a test naming `_T13_`.
+T13 was **partial** for most of this project's life, for one specific reason: nothing had been
+published to the ERC-8004 registry, so there was no published score for a third party to
+disagree with. Recomputation was real but hypothetical.
+
+It is now covered. `indexer/test/published.test.ts` reads every unrevoked DCS-1 entry on the
+Reputation Registry for the agent, takes the block height out of each entry's `tag2`, replays
+the mandate from its deploy block to exactly that height with nothing cached, and asserts the
+recomputed score equals the published value. A publisher who posted a flattering number fails
+it; so does an indexer that has drifted from the spec.
+
+The test was checked against a wrong answer before being believed. Replaying from a later start
+block recomputes 200 where 372 is published, and the assertion names both numbers and the
+publisher. A verification test that has never been seen to fail is decoration.
+
+Two structural facts back the row up, neither of which is a test:
+
+- **The publisher owns nothing.** The registry rejects feedback from the identity's owner or
+  operators - `Self-feedback not allowed` - which is enforced on chain, not by convention. The
+  owner key literally cannot post a score for its own agent; the attempt reverts.
+- **Anyone may post a competing entry**, and the test checks all of them, not only ours. Two
+  honest indexers should agree; a disagreement means one has a bug, and `inputHash` says which
+  logs to look at.
+
+## Notes on the partial rows
 
 **T5.** The balance assertion caps what a counterparty can take at the declared outflow plus
 slippage. It cannot make a counterparty honest - if the agent declares 100 and the counterparty
