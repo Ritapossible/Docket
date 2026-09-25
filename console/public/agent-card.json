@@ -1,0 +1,48 @@
+{
+  "protocolVersion": "0.3.0",
+  "name": "Docket showcase mandate",
+  "description": "An AI agent whose reputation is computed from what a contract actually let it do. The agent holds a key that can call one function, act(), on a Mandate contract; the mandate refuses anything outside its policy and records the refusal. DCS-1 turns that enforced record into a score anyone can recompute from the mandate's own event log.",
+  "url": "https://github.com/Ritapossible/docket",
+  "preferredTransport": "JSONRPC",
+  "version": "0.1.0",
+  "provider": {
+    "organization": "Docket",
+    "url": "https://github.com/Ritapossible/docket"
+  },
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "defaultInputModes": ["application/json"],
+  "defaultOutputModes": ["application/json"],
+  "skills": [
+    {
+      "id": "bounded-native-transfer",
+      "name": "Bounded native transfer",
+      "description": "Sends MON to an allowlisted counterparty, within a per-action cap, a rolling window cap, and a rate limit. Every attempt is recorded whether it was allowed or refused.",
+      "tags": ["payments", "monad", "bounded-authority"]
+    }
+  ],
+  "registrations": [
+    {
+      "agentRegistry": "eip155:10143:0x8004A818BFB912233c491871b3d84c89A494BD9e"
+    }
+  ],
+  "trustModels": ["reputation"],
+  "x-docket": {
+    "specVersion": "DCS-1",
+    "spec": "https://github.com/Ritapossible/docket/blob/main/spec/DCS-1.md",
+    "chainId": 10143,
+    "mandate": "0x2EC195646731F274c0e500f3B671C04189446Ae9",
+    "deployBlock": 65577709,
+    "recompute": "node --experimental-strip-types indexer/src/cli.ts score 0x2EC195646731F274c0e500f3B671C04189446Ae9 --from 65577709",
+    "note": "deployBlock is load-bearing, not decoration. Monad's public RPC caps eth_getLogs at 100 blocks per request, so a verifier scanning from genesis would need hundreds of thousands of calls. Without a published start block, 'anyone can recompute this' is true in principle and false in practice.",
+    "authority": {
+      "agentCanCall": "act(Action) on the mandate, and nothing else",
+      "agentCannotCall": "approve, increaseAllowance, setApprovalForAll, permit - refused by selector",
+      "ownerControls": "policy, pause, and the ERC-8004 identity. Tightening is immediate; loosening waits out a timelock.",
+      "scorePublishedBy": "an independent key that owns nothing and can only post a recomputable claim"
+    }
+  }
+}
