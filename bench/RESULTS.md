@@ -86,6 +86,34 @@ by filtering that topic.
 against a deliberately oversized fixture. Note that the gas report's "Deployment Size" column
 is *not* the runtime size; reading it as such is how this was briefly recorded wrong.
 
+## 4b. Act-to-finality on Monad testnet - measured 25 September
+
+**The number the whole argument rests on**, and until today it was prose. Measured against a
+live mandate (`0x4e21…0DAa`), 20 refused acts, each a real transaction leaving a real `Denied`
+event:
+
+| | Submission -> tx hash | Submission -> receipt |
+| --- | --- | --- |
+| p50 | 119 ms | **568 ms** |
+| p95 | 684 ms | 1,359 ms |
+| p99 | 684 ms | 1,359 ms |
+| min | - | 308 ms |
+| max | - | 1,359 ms |
+
+Gas per refused act on chain: **76,588**, consistent across all 20 samples.
+
+Reproduce: `MANDATE=0x… AGENT_PRIVATE_KEY=0x… node bench/latency.mjs 20`
+
+What this supports and what it does not. A median of 568 ms from submitting an act to having it
+final is a policy check that fits inside an agent's action loop - it is a pause, not a job. The
+tail is worse than the median by more than a factor of two, and that is reported rather than
+smoothed: the p95 is 1.36 s, so an agent acting on a hard deadline needs to budget for the tail
+and not the median. Against the alternative in `ARCHITECTURE.md` §2 - a ZK gate at 30 to 75
+seconds of proving per spend - even the worst sample here is two orders of magnitude cheaper.
+
+All 20 acts emitted their event. A refused act that emitted nothing would mean the record was
+lost, so `bench/latency.mjs` fails the run if any sample's receipt carries no logs.
+
 ## 5. Console sync cost - measured 25 September
 
 The console used to re-walk all history every two seconds. Measured against a 25,010-block

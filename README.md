@@ -145,8 +145,33 @@ The config also sets a Content-Security-Policy, immutable caching for fingerprin
 locally with those exact headers, so the policy can be tested before it ships rather than
 debugged on a live URL.
 
+## Live on Monad testnet
+
+| | |
+| --- | --- |
+| Showcase mandate | [`0x2EC195646731F274c0e500f3B671C04189446Ae9`](https://testnet.monadexplorer.com/address/0x2EC195646731F274c0e500f3B671C04189446Ae9) |
+| Deploy block | `65577709` |
+| Benchmark mandate | [`0x4e211213777c4049416327c6F5ea10cDA93b0DAa`](https://testnet.monadexplorer.com/address/0x4e211213777c4049416327c6F5ea10cDA93b0DAa) |
+| Chain | Monad testnet, id `10143` |
+
+Full provenance - transaction hashes, constructor arguments, the commit each was built from -
+is in [`deployments/monad-testnet.json`](deployments/monad-testnet.json).
+
+Recompute the score yourself, from chain events only:
+
+```bash
+node --experimental-strip-types indexer/src/cli.ts \
+  score 0x2EC195646731F274c0e500f3B671C04189446Ae9 --from 65577709
+```
+
+**Measured, not claimed:** act-to-finality p50 **568 ms**, min 308 ms, p95 1.36 s, over 20 acts
+on testnet. That is a policy check that fits inside an agent's action loop. See
+[`bench/RESULTS.md`](bench/RESULTS.md) §4b for the tail and the reproduction command.
+
 ## Status
 
-Contracts, indexer, SDK, demo and console are built and tested. Nothing is deployed to a public
-chain yet, and act-to-finality latency - the measurement the Monad argument rests on - is still
-outstanding.
+Contracts, indexer, SDK, demo and console are built, tested, and deployed to Monad testnet. The
+latency measurement the Monad argument rests on is done and published above.
+
+Outstanding: the ERC-8004 identity and reputation entries, a scheduled agent driving the
+showcase mandate continuously, and the demo video.

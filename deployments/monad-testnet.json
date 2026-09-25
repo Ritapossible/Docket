@@ -1,0 +1,53 @@
+{
+  "network": "monad-testnet",
+  "chainId": 10143,
+  "rpc": "https://testnet-rpc.monad.xyz",
+  "explorer": "https://testnet.monadexplorer.com",
+  "deployedAt": "2026-09-25",
+  "commit": "549018101bf43a53fe5731fd412bffff584cbaf9",
+  "solc": "0.8.26",
+  "evmVersion": "cancun",
+  "optimizer": {"enabled": true, "runs": 20000},
+  "note": "Two mandates, deliberately. The benchmark run leaves 20 hard breaches on whichever mandate it targets, which caps DCS-1's breach term and pins that mandate's score at 0 - correct behaviour, and useless for showing the arc from good conduct to a refusal. So the latency benchmark has its own mandate and the showcase has a clean record.",
+  "accounts": {
+    "owner": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
+    "agent": "0x0536468C3565198672Ad61A178f822C3D997c65C",
+    "guardian": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579"
+  },
+  "mandates": {
+    "showcase": {
+      "address": "0x2EC195646731F274c0e500f3B671C04189446Ae9",
+      "deployBlock": 65577709,
+      "purpose": "The mandate the console and the demo point at. Clean conduct record.",
+      "funded": "1.0 MON",
+      "mode": "Enforce",
+      "loosenDelay": 3600,
+      "constructorArgs": {
+        "owner": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
+        "agent": "0x0536468C3565198672Ad61A178f822C3D997c65C",
+        "guardian": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
+        "loosenDelay": 3600,
+        "policy": {"expiry": 0, "rateCap": 30, "rateWindow": 200, "rateBuckets": 10, "slippageBps": 0, "mode": "Observe"}
+      },
+      "nativeAssetPolicy": {"perActionCap": "0.5 MON", "windowCap": "5 MON", "windowDuration": 3600, "windowBuckets": 12},
+      "queuedLoosening": {
+        "call": "allowCall(0x000000000000000000000000000000000000c0DE, 0x00000000)",
+        "executableAtUnix": 1790344631,
+        "why": "Allowlisting is a loosening, so even setup waits out the timelock. That is invariant I3 working on a real chain rather than in a test."
+      }
+    },
+    "bench": {
+      "address": "0x4e211213777c4049416327c6F5ea10cDA93b0DAa",
+      "deployBlock": 65577091,
+      "purpose": "Latency benchmark. Carries 20 refused acts, so DCS-1 scores it 0.",
+      "funded": "2.0 MON",
+      "mode": "Enforce",
+      "deployTx": "0x35bb154c3b88ff84a725194060e1cc6fbf8a34a6df42e4ecb7adc8558eb593bd",
+      "armTx": "0x06941421bd4762140cf40c9027483d8ade5ef969ffd3e465491933628bf2e6b3"
+    }
+  },
+  "verify": {
+    "showcase": "node --experimental-strip-types indexer/src/cli.ts score 0x2EC195646731F274c0e500f3B671C04189446Ae9 --from 65577709",
+    "bench": "node --experimental-strip-types indexer/src/cli.ts score 0x4e211213777c4049416327c6F5ea10cDA93b0DAa --from 65577091"
+  }
+}
