@@ -20,16 +20,24 @@ function Bar({label, value, breach}: {label: string; value: bigint; breach?: boo
 export function ScorePanel({
   score,
   inputHash,
-  asOfBlock,
+  scoredAtBlock,
+  coversFullHistory,
+  syncedFrom,
   mandate,
   fromBlock,
 }: {
-  score: ScoreBreakdown;
-  inputHash: string;
-  asOfBlock: bigint;
+  score: ScoreBreakdown | null;
+  inputHash: string | null;
+  scoredAtBlock: bigint | null;
+  coversFullHistory: boolean;
+  syncedFrom: bigint;
   mandate: string;
   fromBlock: bigint;
 }) {
+  const command = `docket score ${mandate} --from ${fromBlock.toString()}${
+    scoredAtBlock ? ` --at ${scoredAtBlock.toString()}` : ""
+  }${score ? ` --verify ${score.score}` : ""}`;
+
   return (
     <Panel
       label="DCS-1 · conduct score"
@@ -45,29 +53,57 @@ export function ScorePanel({
       }
     >
       <div className="panel-body">
-        <div className="score-row">
-          <div className="score-figure">
-            {score.score}
-            <small> / 1000</small>
-          </div>
-          <div className="bars">
-            <Bar label="experience" value={score.experiencePpm} />
-            <Bar label="age" value={score.agePpm} />
-            <Bar label="authority" value={score.authorityPpm} />
-            <Bar label="breach" value={score.breachPpm} breach />
-          </div>
-        </div>
-
-        <div className="terminal score-command">
-          <span className="prompt">$</span>
-          <div>
-            docket score {mandate} --from {fromBlock.toString()} --at {asOfBlock.toString()}{" "}
-            --verify {score.score}
-            <div className="caption">
-              anyone can reproduce this number · input hash {inputHash.slice(0, 18)}…
+        {score === null || !coversFullHistory ? (
+          /*
+           * A score from a windowed scan is not an approximate score, it is a wrong one:
+           * DCS-1 counts every allowed act since deployment, dates the first one, and
+           * accumulates every denial. Showing a plausible number computed from the last few
+           * thousand blocks would be exactly the failure this project exists to argue against.
+           */
+          <>
+            <p style={{marginTop: 0, color: "var(--panel-ink)"}}>
+              Not computed here. The stream above is a live window from block{" "}
+              {syncedFrom.toString()}, and DCS-1 counts every act since deployment - a score
+              from a partial history would be confidently wrong rather than roughly right.
+            </p>
+            <div className="terminal score-command">
+              <span className="prompt">$</span>
+              <div>
+                {command}
+                <div className="caption">
+                  one cold walk of the full history · reload with <code>&amp;full=1</code> to
+                  compute it in the browser
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        ) : (
+          <>
+            <div className="score-row">
+              <div className="score-figure">
+                {score.score}
+                <small> / 1000</small>
+              </div>
+              <div className="bars">
+                <Bar label="experience" value={score.experiencePpm} />
+                <Bar label="age" value={score.agePpm} />
+                <Bar label="authority" value={score.authorityPpm} />
+                <Bar label="breach" value={score.breachPpm} breach />
+              </div>
+            </div>
+
+            <div className="terminal score-command">
+              <span className="prompt">$</span>
+              <div>
+                {command}
+                <div className="caption">
+                  anyone can reproduce this number · as of block {scoredAtBlock?.toString()} ·
+                  input hash {inputHash?.slice(0, 18)}…
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </Panel>
   );

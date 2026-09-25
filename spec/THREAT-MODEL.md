@@ -21,14 +21,16 @@ optimism. Rows marked **partial** or **not covered** are real and are rendered i
 | T10 | A compromised key spams denials to tank the mandate's score | the agent pays gas for its own refusals; DCS-1 separates hard from soft breaches | partial |
 | T11 | Sybil - abandon a tarnished mandate and deploy a fresh one | economic only: DCS-1 weights age and time-weighted capital, neither of which can be accelerated | partial, by design |
 | T12 | Oracle manipulation against price-band rules | price bands are out of scope in v1 | n/a in v1 |
-| T13 | The indexer publishes a false score | anyone recomputes from events; `inputHash` is published with every score | not yet - week 3 |
+| T13 | The indexer publishes a false score | anyone recomputes from events; `inputHash` is published with every score | partial |
 | T14 | The public denial log leaks the agent's strategy | none in v1; commit-then-reveal calldata is future work | not covered |
 
 ## Notes on the partial rows
 
-**T13.** The mechanism is designed (`ARCHITECTURE.md` §4.2) but the indexer does not exist yet,
-so the row cannot be marked covered. It becomes covered when `docket score --verify` reproduces
-a published score from a cold sync and a test asserts it.
+**T13.** The indexer exists and DCS-1 is pinned by 15 vectors hand-computed from the spec, so
+recomputation is real rather than designed. It is **partial** rather than covered for one
+specific reason: nothing has been published to the ERC-8004 registry yet, so there is no
+published score for a third party to disagree with. It becomes covered when `docket score
+--verify` reproduces a score published on testnet from a cold sync, with a test naming `_T13_`.
 
 **T5.** The balance assertion caps what a counterparty can take at the declared outflow plus
 slippage. It cannot make a counterparty honest - if the agent declares 100 and the counterparty

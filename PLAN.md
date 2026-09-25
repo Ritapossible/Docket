@@ -318,8 +318,9 @@ Deploy in `Observe` mode, arm it once the false-denial rate is known.
 > **Exit:** a funded mandate live on testnet; `deployments/monad-testnet.json` committed; a
 > scripted agent transacting against it on a schedule; first latency figures in `bench/`.
 
-**2. Incremental sync in the console.** *(no external dependency - do this first if the key is
-not ready)*
+**2. ~~Incremental sync in the console~~ - DONE 25 Sep.** 74 requests on first paint, 7 per poll
+and flat in the mandate's age. The score is withheld on a windowed load rather than
+approximated. Original note kept below for the reasoning.
 
 A hard blocker for item 1, and the two are on a collision course: the console re-walks all
 history every two seconds, so a day-old mandate needs 1,407 requests/second and a week-old one

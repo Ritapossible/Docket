@@ -74,7 +74,7 @@ export function App() {
               <div className="panel-body">
                 <div className="stats">
                   <Stat label="Balance" value={`${formatEth(view.balance)} MON`} />
-                  <Stat label="DCS-1" value={view.score.score} />
+                  <Stat label="DCS-1" value={view.score ? view.score.score : "windowed"} />
                   <Stat
                     label="Mode"
                     value={view.paused ? "PAUSED" : view.mode === 1 ? "ENFORCE" : "OBSERVE"}
@@ -97,7 +97,7 @@ export function App() {
         ) : null}
         {state.status === "loading" ? (
           <p className="lede" style={{marginTop: 18}}>
-            Reading the chain…
+            {state.detail}
           </p>
         ) : null}
       </section>
@@ -109,7 +109,9 @@ export function App() {
             <ScorePanel
               score={view.score}
               inputHash={view.inputHash}
-              asOfBlock={view.asOfBlock}
+              scoredAtBlock={view.scoredAtBlock}
+              coversFullHistory={view.coversFullHistory}
+              syncedFrom={view.syncedFrom}
               mandate={connection.mandate}
               fromBlock={connection.fromBlock}
             />

@@ -89,7 +89,7 @@ PLAN.md           week-by-week schedule, definition of done, cut list, risk regi
 contracts/        Foundry. Mandate, policy and window libraries
 sdk/              TypeScript + viem. act(), DeniedError, agent tool-shim
 indexer/          deterministic replay, DCS-1 reference implementation, verify CLI
-console/          Next.js. live stream, limits, replay, "not protected from" panel
+console/          Vite + React. live stream, limits, "not protected from" panel
 spec/             DCS-1.md, THREAT-MODEL.md, POLICY.md, ERC8004.md
 bench/            load harness and published results
 ```

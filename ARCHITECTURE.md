@@ -436,7 +436,7 @@ Stated here so it is stated somewhere other than a judge's question.
 contracts/   Foundry. Mandate, policy library, window library.
 sdk/         TypeScript + viem. act(), DeniedError, policy authoring, agent tool-shim.
 indexer/     Deterministic replay, DCS-1 reference implementation, verify CLI.
-console/     Next.js. Live stream, limits, replay, "not protected from" panel.
+console/     Vite + React. Live stream, limits, "not protected from" panel.
 spec/        DCS-1.md, THREAT-MODEL.md, POLICY.md, ERC8004.md.
 bench/       Load harness and published results.
 ```
@@ -483,7 +483,7 @@ Written after building the first working version end to end. These are defects a
 engineering controls, not wishes. The ones marked **BLOCKER** must close before the testnet
 deployment: they either fail on a real chain or make the deployment unverifiable.
 
-### 10.1 The console re-reads all history on every poll - BLOCKER
+### 10.1 ~~The console re-reads all history on every poll~~ - RESOLVED 25 Sep
 
 `useMandate` calls `replay()` from `fromBlock` every two seconds, and `replay()` walks the whole
 range in 100-block chunks because that is Monad's `eth_getLogs` cap. The cost grows with the
@@ -503,12 +503,25 @@ It also collides with the plan's strongest move. DCS-1's age term cannot be acce
 mandate deployed early and left running is the one advantage no competitor can retro-fit - and
 under this design, the longer it runs the more completely the console breaks.
 
-**Fix: incremental sync.** Hold a cursor and the accumulated history in state; on each poll query
-only `(lastSyncedBlock, head]`, fold new events into the existing totals, and re-derive the score
-from the fold. The initial load still costs a full walk, so it needs a progress indicator and a
-higher chunk size where the RPC allows one. Reorgs are the wrinkle: Monad has single-slot
-finality, so a small confirmation lag - sync to `head - N` and re-scan the last N blocks each
-poll - is sufficient and much cheaper than tracking reorgs properly.
+**Fixed by windowing plus a cursor.** The first pass walks the full history only when the span
+is under 20,000 blocks (200 requests at Monad's 100-block `eth_getLogs` cap, a few seconds);
+past that it opens a 5,000-block window at the head. Every pass after that queries
+`(cursor, head]` and appends. Measured at 74 requests on first paint and **7 per poll, flat**,
+against a 25,010-block chain - see `bench/RESULTS.md` §5.
+
+The part worth keeping in mind is what the fix refuses to do. A windowed scan cannot produce a
+DCS-1 score: the spec counts every allowed act since deployment, dates the first one and
+accumulates every denial, so a number from the last few thousand blocks would be confidently
+wrong rather than roughly right. `ReplayResult.coversFullHistory` carries that distinction and
+the console withholds the score when it is false, showing the verification command instead.
+Showing no score is better than showing a plausible one, in a project whose entire argument is
+that the number is recomputable.
+
+A score is pinned to a block height anyway - DCS-1 publishes `(score, specVersion, asOf,
+inputHash)` - so it does not need to be live. The designed path is that a publisher walks the
+history on a schedule and writes to the ERC-8004 reputation registry, and the console reads
+that with a single contract call. That makes the console O(1) in the mandate's age and is why
+Envio is the right home for the publisher rather than for the console.
 
 The `docket score` CLI is fine as it is: one full walk for a one-shot verification is correct,
 and it is the operation that must be reproducible from scratch.

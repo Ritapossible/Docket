@@ -86,7 +86,28 @@ by filtering that topic.
 against a deliberately oversized fixture. Note that the gas report's "Deployment Size" column
 is *not* the runtime size; reading it as such is how this was briefly recorded wrong.
 
-## 5. Still not measured
+## 5. Console sync cost - measured 25 September
+
+The console used to re-walk all history every two seconds. Measured against a 25,010-block
+chain carrying a real mandate, before and after the incremental-sync change:
+
+| | Old (full re-walk each poll) | New (window + cursor) |
+| --- | --- | --- |
+| Requests on first paint | ~250 | **74** |
+| Requests per poll | ~250, growing with age | **7, flat** |
+| First paint | grows without bound | **5.1 s** |
+
+The flat number is the point. Per-poll cost no longer depends on how long the mandate has been
+alive, which is what made the old design incompatible with the one strategy that cannot be
+faked later: DCS-1's age term rewards a mandate that has been running for weeks, and under the
+old design every week made the console worse.
+
+The score is **withheld** on a windowed load rather than approximated. DCS-1 counts every act
+since deployment, dates the first one and accumulates every denial, so a number computed from
+the last few thousand blocks is not roughly right, it is confidently wrong. The panel shows the
+`docket score --verify` command instead, and `&full=1` forces a full walk in the browser.
+
+## 5b. Still not measured
 
 - **act-to-finality latency, p50 / p95 / p99, on testnet.** The remaining half of §2, and the
   headline number. Needs a funded key.

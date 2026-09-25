@@ -27,6 +27,16 @@ export interface ReplayResult {
   inputHash: Hex;
   logCount: number;
   asOfBlock: bigint;
+  /** First block actually scanned. */
+  fromBlock: bigint;
+  /**
+   * True only when the scan started at the mandate's deployment, so the history is complete.
+   *
+   * DCS-1 counts acts, dates the first one and accumulates every denial, so a windowed scan
+   * produces a number that is confidently wrong. Callers must not present a score derived from
+   * a replay where this is false - showing no score is better than showing a plausible one.
+   */
+  coversFullHistory: boolean;
 }
 
 const ASSET_POLICY_ABI = [
@@ -52,7 +62,13 @@ const ASSET_POLICY_ABI = [
 export async function replay(
   client: PublicClient,
   mandate: Address,
-  options: {fromBlock: bigint; asOfBlock?: bigint; chunkSize?: bigint} = {fromBlock: 0n},
+  options: {
+    fromBlock: bigint;
+    asOfBlock?: bigint;
+    chunkSize?: bigint;
+    /** Set when `fromBlock` is a window start rather than the mandate's deploy block. */
+    windowed?: boolean;
+  } = {fromBlock: 0n},
 ): Promise<ReplayResult> {
   // cacheTime: 0 is load-bearing. viem caches getBlockNumber for its polling interval by
   // default, so a replay run moments after a transaction lands can silently score a stale view
@@ -156,6 +172,8 @@ export async function replay(
 
   return {
     acts,
+    fromBlock,
+    coversFullHistory: options.windowed !== true,
     history: {
       allowedActs,
       firstActTime,
