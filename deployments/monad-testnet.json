@@ -30,10 +30,19 @@
         "policy": {"expiry": 0, "rateCap": 30, "rateWindow": 200, "rateBuckets": 10, "slippageBps": 0, "mode": "Observe"}
       },
       "nativeAssetPolicy": {"perActionCap": "0.5 MON", "windowCap": "5 MON", "windowDuration": 3600, "windowBuckets": 12},
-      "queuedLoosening": {
+      "loosening": {
         "call": "allowCall(0x000000000000000000000000000000000000c0DE, 0x00000000)",
+        "queueTx": "queueLoosen at deploy",
         "executableAtUnix": 1790344631,
-        "why": "Allowlisting is a loosening, so even setup waits out the timelock. That is invariant I3 working on a real chain rather than in a test."
+        "executeTx": "0x0a7813cffafd1bcdf2a3fa0d4699296059d57925a848b24b407ef329e000019f",
+        "executeBlock": 65630289,
+        "why": "Allowlisting is a loosening, so even setup waited out the full hour. That is invariant I3 working on a real chain rather than in a test - the first execute attempt reverted with TimelockPending, 36 minutes early."
+      },
+      "conduct": {
+        "agent": "script/agent.mjs, run every eight hours by .github/workflows/agent.yml",
+        "counterparty": "0x000000000000000000000000000000000000c0DE",
+        "amountPerAct": "0.0005 MON",
+        "why": "DCS-1's age term saturates at 180 days and cannot be bought, so the only way to hold an aged mandate at judging is to have deployed early and kept it working."
       }
     },
     "bench": {

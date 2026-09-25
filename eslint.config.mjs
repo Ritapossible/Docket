@@ -48,7 +48,20 @@ export default tseslint.config(
     },
   },
   {
-    files: ["**/*.mjs", "**/scripts/**"],
-    languageOptions: {globals: {process: "readonly", console: "readonly"}},
+    // Node scripts: the runtime globals they legitimately use. Listing them rather than
+    // switching off no-undef keeps a genuine typo an error.
+    files: ["**/*.mjs", "script/**", "bench/**", "**/scripts/**"],
+    languageOptions: {
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        performance: "readonly",
+        fetch: "readonly",
+        Buffer: "readonly",
+        URL: "readonly",
+        setTimeout: "readonly",
+        __dirname: "readonly",
+      },
+    },
   },
 );

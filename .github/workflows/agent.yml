@@ -1,0 +1,53 @@
+name: scheduled agent
+
+# Keeps the showcase mandate accruing a conduct record.
+#
+# DCS-1's age term saturates at 180 days and cannot be accelerated, so an aged mandate at
+# judging is only possible if it was deployed early and kept working. A laptop or a dev
+# container cannot be relied on for that; a scheduled workflow can.
+#
+# Requires one repository secret: AGENT_PRIVATE_KEY (testnet only).
+# Settings -> Secrets and variables -> Actions -> New repository secret.
+
+on:
+  schedule:
+    # Every eight hours, off the hour so it is not queued behind everyone else's midnight jobs.
+    # Three acts a day for a year is ~1,100 allowed acts, which lands the DCS-1 experience term
+    # just past its 1,000-act breakpoint, and costs ~0.55 of the mandate's 1 MON. A faster
+    # schedule buys very little E and drains the mandate long before judging.
+    - cron: "17 */8 * * *"
+  workflow_dispatch:
+    inputs:
+      acts:
+        description: "How many acts to perform"
+        default: "1"
+
+concurrency:
+  group: scheduled-agent
+  cancel-in-progress: false
+
+jobs:
+  act:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Act
+        env:
+          MANDATE: "0x2EC195646731F274c0e500f3B671C04189446Ae9"
+          AGENT_PRIVATE_KEY: ${{ secrets.AGENT_PRIVATE_KEY }}
+          MONAD_TESTNET_RPC: https://testnet-rpc.monad.xyz
+        run: |
+          if [ -z "$AGENT_PRIVATE_KEY" ]; then
+            echo "AGENT_PRIVATE_KEY is not set - add it as a repository secret."
+            exit 1
+          fi
+          node --experimental-strip-types script/agent.mjs "${{ inputs.acts || '1' }}"
