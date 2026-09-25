@@ -91,6 +91,45 @@ a { color: inherit; }
   opacity: 0.75;
 }
 .navlink:hover { opacity: 1; color: var(--purple); }
+.navlink:focus-visible,
+.wordmark:focus-visible,
+a:focus-visible,
+button:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; border-radius: 3px; }
+
+/* The current page is named, not just coloured: colour alone is not a state. */
+.navlink.current { opacity: 1; color: var(--purple); font-weight: 700; }
+.navlink.current::after {
+  content: "";
+  display: block;
+  height: 2px;
+  background: var(--purple);
+  border-radius: 2px;
+  margin-top: 5px;
+}
+.navlink.external { opacity: 0.55; }
+
+.skiplink {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--purple);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 0 0 10px 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  z-index: 10;
+}
+.skiplink:focus { left: 0; }
+
+.linkbutton {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--purple-lift);
+}
+.linkbutton:hover { text-decoration: underline; }
 
 /* ── Section furniture ──────────────────────────────────────────────── */
 
@@ -227,6 +266,13 @@ h3 { font-size: 20px; letter-spacing: -0.02em; }
 @media (max-width: 520px) { .stats { grid-template-columns: 1fr; } }
 
 .stat { background: var(--panel-raised); border-radius: var(--radius-row); padding: 18px 20px; }
+
+/* The same tile on a cream section rather than inside a dark panel. */
+.stat.light { background: var(--bg-card); }
+.stat.light .k { color: var(--ink-muted); }
+.stat.light .v { color: var(--ink); }
+.stat.light a { color: var(--purple); text-decoration: none; }
+.stat.light a:hover { text-decoration: underline; }
 .stat .k {
   font-family: var(--mono);
   font-size: 11px;
@@ -386,6 +432,36 @@ h3 { font-size: 20px; letter-spacing: -0.02em; }
 .fill { height: 100%; background: var(--panel-ink); border-radius: var(--radius-pill); }
 .fill.breach { background: var(--purple-lift); }
 
+/* ── Spec tables ────────────────────────────────────────────────────── */
+
+.spec-table {
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  min-width: 320px;
+}
+.spec-table th {
+  text-align: left;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 500;
+  padding: 0 32px 10px 0;
+  border-bottom: 1px solid rgba(20, 18, 16, 0.12);
+}
+.spec-table td { padding: 9px 32px 9px 0; border-bottom: 1px solid rgba(20, 18, 16, 0.06); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: rgba(74, 0, 97, 0.07);
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+
+.lede a { color: var(--purple); }
+
 /* ── Threat table ───────────────────────────────────────────────────── */
 
 .threat {
@@ -467,6 +543,7 @@ footer {
   .stat { padding: 16px; }
   .stat .v { font-size: 22px; }
   .score-row { gap: 20px; }
+  .navlink.current::after { margin-top: 3px; }
   .score-command { margin-top: 22px; }
   .lede { font-size: 16.5px; }
   .button { width: 100%; text-align: center; }

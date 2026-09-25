@@ -47,3 +47,5 @@ RPC_URL="http://127.0.0.1:$PORT_CHAIN" CONSOLE_URL="http://127.0.0.1:$PORT_WEB" 
 
 RPC_URL="http://127.0.0.1:$PORT_CHAIN" CONSOLE_URL="http://127.0.0.1:$PORT_WEB" \
   node console/scripts/check-responsive.mjs "$MANDATE"
+
+CONSOLE_URL="http://127.0.0.1:$PORT_WEB" node console/scripts/check-routes.mjs

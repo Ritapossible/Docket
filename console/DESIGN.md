@@ -130,3 +130,22 @@ nothing else providing it and the content sits flush against the edge. Use `padd
 Below 560px the masthead stacks - wordmark on its own line, nav wrapping beneath it. Four
 letterspaced mono links do not fit beside a wordmark at that width, and shrinking them until
 they do makes them unreadable.
+
+## Pages
+
+Four in-app routes plus one external link, on a hash router (`#/architecture`). Hash rather
+than paths because the build is static with a relative base, so it runs from a domain root, a
+sub-directory or a local file with no rewrite rule anywhere - and a path router would need one
+on every host and would break the relative asset URLs.
+
+| Route | Holds |
+| --- | --- |
+| `#/` | The live mandate, the act stream, the score, and what the project is |
+| `#/architecture` | The six invariants, the measured latency, the enforcement ladder, governance |
+| `#/dcs-1` | The scoring spec: terms, tables, verification, known limits |
+| `#/threat-model` | Every row, generated from the spec, uncovered ones first |
+
+The current page is marked by weight and a rule as well as colour, because colour alone is not
+a state. `console/scripts/check-routes.mjs` asserts each route renders real content, that the
+title changes, and that no nav link points off-site except the one that should - a router is
+exactly where a page can compile, mount and show an empty shell.

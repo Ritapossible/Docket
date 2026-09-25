@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * Visual smoke test: boot the built console against a seeded chain and assert it rendered
- * real data, then save screenshots.
+ * Visual smoke test: boot the built console against a seeded chain and assert the OVERVIEW
+ * route rendered real mandate data, then save screenshots.
+ *
+ * The threat rows moved to their own route and are asserted by check-routes.mjs; this script
+ * owns the live-chain surface only.
  *
  * A build that compiles is not a UI that works. This catches the failure mode a typecheck
  * cannot - the page loads, throws in a hook, and renders an empty shell.
@@ -53,12 +56,10 @@ await page.screenshot({path: `${outDir}/console-top.png`});
 const score = (await page.locator(".score-figure").first().textContent().catch(() => "")) ?? "";
 const acts = await page.locator(".act").count();
 const denied = await page.locator(".verdict.denied").count();
-const threats = await page.locator(".threat").count();
 
 console.log(`score:   ${score.trim().replace(/\s+/g, " ")}`);
 console.log(`acts:    ${acts}`);
 console.log(`denied:  ${denied}`);
-console.log(`threats: ${threats}`);
 console.log(`fatal:   ${fatal.length === 0 ? "none" : fatal.length}`);
 for (const error of fatal.slice(0, 5)) console.log(`  ! ${error}`);
 if (noise.length > 0) {
@@ -74,7 +75,6 @@ const failures = [];
 if (fatal.length > 0) failures.push(`${fatal.length} fatal error(s)`);
 if (acts === 0) failures.push("no acts rendered");
 if (denied === 0) failures.push("no denial rendered");
-if (threats === 0) failures.push("threat panel empty");
 if (!score.includes("/")) failures.push("score not rendered");
 
 if (failures.length > 0) {

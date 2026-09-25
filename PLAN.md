@@ -352,8 +352,8 @@ verified explorer link, committed.
 **6. ~~`LICENSE` and `SECURITY.md`~~ - done 9 Sep**, along with CONTRIBUTING, TESTING, issue and
 PR templates, TypeScript linting and CI hardening, from the Latch repo review.
 
-**7. Accessibility pass** (§10.8): `aria-live` on the act stream, skip link, `:focus-visible`,
-`prefers-reduced-motion`.
+**7. Accessibility pass** (§10.8): skip link and `:focus-visible` landed with the router on
+25 Sep. Still to do: `aria-live` on the act stream and a `prefers-reduced-motion` guard.
 
 ### P1b - from the Latch review (added 9 Sep)
 
