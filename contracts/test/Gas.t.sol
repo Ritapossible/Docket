@@ -43,7 +43,11 @@ contract GasTest is Test {
     ///      this, the balance assertion has stopped being affordable and the cap must move.
     function test_fullyTrackedActStaysUnderBudget() public {
         uint256 used = _measureAct(16);
-        assertLt(used, 250_000, "16 tracked assets must stay under the act budget");
+        console.log("16 tracked, gas per act:", used);
+        // 94,607 measured. The headroom absorbs cross-version noise in forge's gas accounting
+        // without being so loose that the guard stops guarding - the old 250,000 was 2.6x the
+        // real figure and would not have caught a doubling.
+        assertLt(used, 130_000, "16 tracked assets must stay under the act budget");
     }
 
     /// @dev The worst case in WindowLib: an agent idle for longer than a whole window pays to
@@ -60,13 +64,15 @@ contract GasTest is Test {
         vm.warp(block.timestamp + 16 * 60 + 1);
         vm.roll(block.number + 1);
 
+        vm.startPrank(agent);
         uint256 g0 = gasleft();
-        vm.prank(agent);
         m.act(a);
         uint256 used = g0 - gasleft();
+        vm.stopPrank();
 
         console.log("worst-case window advance, gas per act:", used);
-        assertLt(used, 250_000, "a full window clear must stay bounded");
+        // 74,841 measured.
+        assertLt(used, 100_000, "a full window clear must stay bounded");
     }
 
     /// @dev The true worst case, and the one that matters for sizing a block: an act that
@@ -86,16 +92,20 @@ contract GasTest is Test {
         vm.warp(block.timestamp + 16 * 60 + 1);
         vm.roll(block.number + 1);
 
+        vm.startPrank(agent);
         uint256 g0 = gasleft();
-        vm.prank(agent);
         m.act(a);
         uint256 used = g0 - gasleft();
+        vm.stopPrank();
 
         console.log("16 tracked, 15 declared, all windows stale, gas per act:", used);
-        console.log("  marginal per declared stale asset:", (used - 95_053) / 15);
+        // Derived, not hardcoded: a pinned baseline silently goes stale the moment the act
+        // path changes, and then the marginal figure is nonsense that still prints cleanly.
+        uint256 baseline = _measureAct(16);
+        console.log("  marginal per declared stale asset:", (used - baseline) / 15);
 
         // A regression guard set from the measurement, not from a number that sounded tidy.
-        // 1.29M measured; the headroom catches a change that makes an act materially more
+        // 1,289,395 measured; the headroom catches a change that makes an act materially more
         // expensive without failing on noise. The dominant term is the set-call-zero allowance
         // pair on a cold token, not the window eviction - see bench/RESULTS.md.
         assertLt(used, 1_400_000, "compound worst case regressed");
@@ -157,13 +167,18 @@ contract GasTest is Test {
 
         // Warm the storage and the balance reads first, so the figure reflects the steady
         // state rather than one-off cold-slot costs.
-        vm.prank(agent);
+        vm.startPrank(agent);
         m.act(a);
 
+        // startPrank, not prank, so no cheatcode runs inside the measured region. A cheatcode
+        // between the two gasleft() reads charges its own overhead to the act, and that
+        // overhead is a property of the forge build rather than of the contract: 1.4 and 1.8
+        // differ by ~10k, enough to move this past its budget on one and not the other. An
+        // agent paying for an act does not invoke a cheatcode either.
         uint256 g0 = gasleft();
-        vm.prank(agent);
         m.act(a);
         used = g0 - gasleft();
+        vm.stopPrank();
     }
 
     function _mandate(uint256 trackedCount) internal returns (Mandate m) {

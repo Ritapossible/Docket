@@ -45,9 +45,14 @@ exists to bound the loop, not to dodge a cliff.
 | --- | --- |
 | Denied act (floor) | 47,154 |
 | Act, median across the suite | 53,708 |
-| One asset, full 16-bucket window eviction after an idle period | 75,287 |
-| 16 tracked, 15 declared, every window stale | 1,289,841 |
-| - marginal per declared stale asset | 79,652 |
+| 16 tracked assets, one declared | 94,607 |
+| One asset, full 16-bucket window eviction after an idle period | 74,841 |
+| 16 tracked, 15 declared, every window stale | 1,289,395 |
+| - marginal per declared stale asset | 79,579 |
+
+*Re-measured 26 September 2026 with the cheatcode moved outside the measured region; see the
+note at the end of this section. The figures moved by a few hundred gas, which is why the
+conclusions below did not change.*
 
 Two findings here, and the second was not what was expected.
 
@@ -142,3 +147,21 @@ the last few thousand blocks is not roughly right, it is confidently wrong. The 
 - **Sustained acts per second**, for one mandate and across N mandates in parallel - the I4
   claim that per-mandate state partitioning lets independent agents scale.
 - **Latency under the compound worst case**, as opposed to its gas cost.
+
+### A note on how these were measured
+
+Each figure brackets one `act()` between two `gasleft()` reads. The original harness put
+`vm.prank(agent)` *inside* that bracket, so every number carried the cost of a cheatcode as
+well as the act.
+
+That went unnoticed because it did not change much on the forge build these numbers were first
+taken with. It surfaced when CI finally ran the contract tests for the first time, on forge
+1.8.3, and reported 1,642,652 for the compound case against a 1,400,000 budget that had passed
+locally on 1.4.2 for weeks. The contract had not changed; the tooling's cheatcode accounting
+had.
+
+The fix is `vm.startPrank` before the measurement rather than `vm.prank` inside it, so nothing
+but the act runs between the two reads. The corrected numbers land within ~450 gas of what this
+file already claimed, which is the reassuring part: the underlying EVM cost is stable across
+forge versions, and only the harness overhead was moving. An agent paying for an act does not
+invoke a cheatcode either, so the clean figure was always the honest one to publish.
