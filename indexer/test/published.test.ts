@@ -27,7 +27,7 @@ import {createPublicClient, http} from "viem";
 
 import {DCS1_TAG, REPUTATION_REGISTRY, reputationRegistryAbi} from "../../sdk/src/erc8004.ts";
 import {score as computeScore} from "../src/dcs1.ts";
-import {type ActManifest, verifyManifest} from "../src/manifest.ts";
+import {type ActManifest, ManifestError, verifyManifest} from "../src/manifest.ts";
 import {replay} from "../src/replay.ts";
 
 const RPC = process.env.MONAD_TESTNET_RPC ?? "https://testnet-rpc.monad.xyz";
@@ -136,6 +136,7 @@ test("_T13_ a published DCS-1 score recomputes from a cold sync", {skip}, async 
         await verifyManifest(
           client,
           manifest,
+          asOfBlock,
           result.acts.map((a) => a.id),
           result.inputHash,
           feedbackHash,
@@ -154,4 +155,59 @@ test("_T13_ a published DCS-1 score recomputes from a cold sync", {skip}, async 
   }
 
   assert.ok(checked > 0, "found no unrevoked DCS-1 entries to verify");
+});
+
+/**
+ * The manifest checks are only worth having if they bite, so this tampers with a real manifest
+ * two ways and asserts both are caught. They are caught by *different* mechanisms, which is why
+ * both exist: dropping an act trips the nonce count, and dropping a policy-change block trips
+ * the inputHash - the nonce knows nothing about `Tightened`, which feeds the authority term.
+ *
+ * Blocks are dropped only when they are alone in their 100-block window. An earlier version of
+ * this check dropped one that shared a window with three others; the window was fetched anyway,
+ * the logs came back, and the test proved nothing while passing.
+ */
+test("_T13_ a tampered manifest is rejected", {skip}, async () => {
+  const client = createPublicClient({transport: http(RPC), cacheTime: 0});
+
+  const response = await fetch(MANIFEST_URL);
+  assert.ok(response.ok, "no manifest published to tamper with");
+  const manifest = (await response.json()) as ActManifest;
+  const asOfBlock = BigInt(manifest.asOfBlock);
+  const blocks = manifest.blocks.map((b) => BigInt(b));
+
+  const windowOf = (b: bigint) => DEPLOY_BLOCK + ((b - DEPLOY_BLOCK) / 100n) * 100n;
+  const counts = new Map<bigint, number>();
+  for (const b of blocks) counts.set(windowOf(b), (counts.get(windowOf(b)) ?? 0) + 1);
+  const isolated = blocks.filter((b) => counts.get(windowOf(b)) === 1);
+  assert.ok(isolated.length > 0, "no block is alone in its window, cannot tamper meaningfully");
+
+  let caught = 0;
+  for (const dropped of isolated) {
+    const tampered: ActManifest = {
+      ...manifest,
+      blocks: manifest.blocks.filter((b) => BigInt(b) !== dropped),
+    };
+    const result = await replay(client, MANDATE, {
+      fromBlock: DEPLOY_BLOCK,
+      asOfBlock,
+      atBlocks: tampered.blocks.map((b) => BigInt(b)),
+    });
+
+    await assert.rejects(
+      () =>
+        verifyManifest(
+          client,
+          tampered,
+          asOfBlock,
+          result.acts.map((a) => a.id),
+          result.inputHash,
+        ),
+      (e: Error) => e instanceof ManifestError,
+      `dropping block ${dropped} from the manifest went undetected`,
+    );
+    caught++;
+  }
+
+  assert.ok(caught > 0, "nothing was tampered with, so nothing was proved");
 });

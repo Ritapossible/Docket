@@ -112,6 +112,12 @@ export class ManifestError extends Error {}
 export async function verifyManifest(
   client: PublicClient,
   manifest: ActManifest,
+  /**
+   * The height the caller actually replayed to. Not necessarily the manifest's own
+   * `asOfBlock`: one manifest covers every entry at or below its height, and checking a
+   * partial replay against the manifest's later `nonce` compares two different questions.
+   */
+  asOfBlock: bigint,
   recoveredIds: readonly bigint[],
   /** The `inputHash` recomputed from the logs the manifest led to, if the caller has it. */
   recomputedInputHash?: Hex,
@@ -122,28 +128,31 @@ export async function verifyManifest(
     throw new ManifestError(`unknown manifest version ${manifest.version}`);
   }
 
-  const asOfBlock = BigInt(manifest.asOfBlock);
-  const claimed = BigInt(manifest.nonce);
+  // One manifest vouches for every entry at or below its own height, so the nonce that matters
+  // is the one at the height actually replayed to. Reading it at the manifest's height instead
+  // compares a partial replay against a later count, which is two different questions and
+  // fails on every entry but the newest.
+  const manifestAsOf = BigInt(manifest.asOfBlock);
+  if (manifestAsOf < asOfBlock) {
+    throw new ManifestError(
+      `manifest covers up to block ${manifestAsOf}, cannot vouch for a replay to ${asOfBlock}`,
+    );
+  }
 
-  // The chain's own count, at the height the score is pinned to. This is the number the
-  // publisher cannot influence, and it is what makes the rest of the check mean anything.
-  const onChain = await client.readContract({
+  // The chain's own count. This is the number the publisher cannot influence, and it is what
+  // makes the rest of the check mean anything.
+  const claimed = await client.readContract({
     address: manifest.mandate,
     abi: mandateAbi,
     functionName: "nonce",
     blockNumber: asOfBlock,
   });
 
-  if (BigInt(onChain) !== claimed) {
-    throw new ManifestError(
-      `manifest claims nonce ${claimed} at block ${asOfBlock}, chain says ${onChain}`,
-    );
-  }
 
   // Exactly 1..nonce, each once. A gap means an act was left out of the manifest; a duplicate
   // or an id past the nonce means the replay picked up something that cannot be real.
   const ids = [...recoveredIds].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  if (BigInt(ids.length) !== claimed) {
+  if (BigInt(ids.length) !== BigInt(claimed)) {
     throw new ManifestError(
       `manifest's blocks yield ${ids.length} acts, chain says ${claimed} happened by block ${asOfBlock}`,
     );
@@ -157,12 +166,13 @@ export async function verifyManifest(
   // Bind the manifest to the entry. Without this a manifest could be edited after publication
   // to point at a different set of logs than the score was computed from - including dropping
   // a Tightened event, which no act count would notice.
-  if (recomputedInputHash && recomputedInputHash !== manifest.inputHash) {
+  const sameHeight = manifestAsOf === asOfBlock;
+  if (sameHeight && recomputedInputHash && recomputedInputHash !== manifest.inputHash) {
     throw new ManifestError(
       `replaying the manifest gives inputHash ${recomputedInputHash}, manifest claims ${manifest.inputHash}`,
     );
   }
-  if (onChainFeedbackHash && onChainFeedbackHash !== manifest.inputHash) {
+  if (sameHeight && onChainFeedbackHash && onChainFeedbackHash !== manifest.inputHash) {
     throw new ManifestError(
       `manifest inputHash ${manifest.inputHash} does not match the on-chain feedbackHash ${onChainFeedbackHash}`,
     );

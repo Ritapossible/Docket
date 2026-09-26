@@ -234,10 +234,32 @@ with nobody watching. Verification of the published score is currently 46 second
 test replays to the published height rather than to head, but the publisher republishes daily,
 so that height tracks head and the cost grows with it.
 
-**The fix, not yet built.** `Mandate.nonce` is public and increments once per `act()`. A
-publisher can ship the list of act-bearing block numbers alongside the score, and a verifier can
-prove that list complete by comparing its length against `nonce` read on chain at the pinned
-height. An omitted act shows up as a count mismatch; a fabricated one has no logs behind it. So
-verification stays trustless while dropping to one request per act - about 1,100 at judging
-rather than 50,000. It needs no contract change and no redeployment, which matters, because
-redeploying would reset the age term and that is the one input to DCS-1 that cannot be bought.
+**The fix, built and measured.** `Mandate.nonce` is public and increments once per `act()`, so
+the publisher ships the list of act-bearing block numbers alongside the score and a verifier
+fetches only those. Completeness is proved rather than trusted, and it took two checks:
+
+- The recovered act ids must be exactly 1..N, with N read from `nonce()` on chain at the height
+  actually replayed to. Catches acts dropped from the middle or the end.
+- That is not sufficient. `Tightened` events feed the authority term and carry no id, so a
+  dropped policy-change block passes the id check untouched. The recomputed `inputHash` is
+  therefore compared against the `feedbackHash` on the registry entry, which binds the manifest
+  to the score it claims to explain. Found because a deliberately incomplete manifest verified
+  clean and scored 270 where the chain says 372.
+
+Both are exercised by `_T13_ a tampered manifest is rejected`, which drops each block that is
+alone in its 100-block window and asserts the rejection. The two cases fail different checks,
+which is the evidence that both are load-bearing.
+
+| Verifying all three published entries | Time |
+| --- | --- |
+| Full walk (`DOCKET_FULL_REPLAY=1`) | **361 s** |
+| Through the manifest | **6 s** |
+
+Same answer, 60x apart, and the expensive path runs weekly so the cheap one never becomes the
+only thing ever checked.
+
+**What is still not proved.** A publisher who omits a policy event from the manifest *and*
+computes the score and `feedbackHash` from the same incomplete set produces a self-consistent
+lie both checks pass. Only an independent full walk catches that. This is not a regression -
+a lying publisher was always only catchable that way, and DCS-1 §1 has always said the spec,
+not the publisher, is the authority.

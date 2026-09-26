@@ -168,9 +168,11 @@ npm install
 # 1. Watch a prompt injection get refused, end to end, on a local chain. ~30 seconds.
 make demo
 
-# 2. Recompute the published score from chain data. This is the whole claim.
-#    Minutes, not seconds - see the note below on why, and what it costs.
+# 2. Recompute the published score from chain data. This is the whole claim. ~10 seconds.
 npm run test:published
+
+#    Do not take the shortcut on trust - walk every block and confirm it agrees. ~6 minutes.
+DOCKET_FULL_REPLAY=1 npm run test:published
 
 # 3. Score the live mandate yourself, with a progress meter.
 node --experimental-strip-types indexer/src/cli.ts score \
@@ -182,32 +184,39 @@ the chain refusing the injected payment with the rule that fired. It exits non-z
 guarantee fails, so it is an integration test that happens to be readable. Run this one first:
 it is fast, it needs no network, and it is the argument in thirty seconds.
 
-**Verification is slow, and getting slower.** Monad's public RPC caps `eth_getLogs` at 100
-blocks and 25 requests a second. Measured against all three public endpoints - the official one,
-drpc and Ankr - the cap is real on each and none of them accepts a 1,000-block range. A full
-replay is therefore one request per 100 blocks of chain, paced, regardless of how few of those
-blocks contain acts.
+**Verification is cheap, and it did not start that way.** Monad's public RPC caps `eth_getLogs`
+at 100 blocks and 25 requests a second - verified against all three public endpoints, none of
+which accepts a 1,000-block range. A naive replay is therefore one request per 100 blocks of
+chain regardless of how few contain acts, which is O(chain age) for a quantity that should
+depend on what the agent did.
 
-| | Requests | Wall clock |
-| --- | --- | --- |
-| Today | 2,532 | **152 seconds, measured** |
-| Projected at judging, 13 October | ~50,000 | ~50 minutes |
+That was not a theoretical problem. The T13 verification, the check this whole claim rests on,
+had already started failing with `requests limited to 25/sec`, and its CI job was on course to
+exceed its timeout around 1 October, a week before submission.
 
-The first row is a timed run at 16.6 requests a second sustained. The second is that rate
-extrapolated to the chain length on 13 October.
+The fix uses something the contract already had. `Mandate.nonce` is public and increments once
+per `act()`, so the publisher ships the list of act-bearing blocks with the score and a verifier
+fetches only those - then proves the list complete rather than trusting it:
 
-That is a real limit on the central claim and it is stated here rather than discovered by
-whoever runs it. It also has a date: the T13 job in CI has a 20 minute timeout, which at the
-measured rate runs out around 1 October, a week before submission. The scan is paced and retries on rate-limit rather than dying half way, and it
-prints progress so it does not read as a hang - but pacing does not make it fast, it makes it
-finish.
+- recovered act ids must be exactly 1..N, with N read from `nonce()` on chain at the replayed
+  height, so an omitted act is a count mismatch
+- the recomputed `inputHash` must match the `feedbackHash` on the registry entry, because
+  `Tightened` events feed the authority term and carry no id, so the count alone would not
+  notice a dropped policy change
 
-The fix is known and is the next piece of work: the cost is O(chain age) when it should be
-O(acts), and roughly 1,100 acts is three orders of magnitude less. Because `Mandate.nonce` is
-public and increments once per `act()`, a publisher can ship the list of act-bearing blocks
-alongside the score and a verifier can prove that list complete by comparing its length against
-`nonce` on chain. An omitted act is detectable; a fabricated one has no logs to back it. That
-keeps verification trustless while making it proportional to what the agent actually did.
+| Verifying all three published entries | Time |
+| --- | --- |
+| Full walk | **361 s** |
+| Through the manifest | **6 s** |
+
+Same answer. A test drops each block that is alone in its 100-block window and asserts the
+rejection; the two cases trip different checks, which is how we know both earn their place.
+
+The honest remainder: a publisher who omits a policy event from the manifest *and* computes the
+score and `feedbackHash` from the same incomplete set produces a self-consistent lie that both
+checks pass. Only an independent full walk catches that, which is why `DOCKET_FULL_REPLAY=1`
+exists and the publish workflow runs it weekly. That is not a new weakness - a lying publisher
+was always only catchable by an independent replay.
 
 ## 9. Limits, stated here rather than left to be found
 
