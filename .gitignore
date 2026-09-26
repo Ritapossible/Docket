@@ -1,6 +1,9 @@
 contracts/out/
 contracts/cache/
-contracts/lib/
+# contracts/lib holds git submodules (forge-std), which must be committed as gitlinks so CI
+# can check them out. Ignoring the whole directory is the default Foundry .gitignore and it
+# silently broke every contracts job in CI for weeks: forge-std existed only on the machine
+# that installed it, so `forge build` on a clean checkout could not resolve the remapping.
 node_modules/
 .env
 .env.*

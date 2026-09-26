@@ -577,8 +577,9 @@ contract Mandate {
                 revert BadPolicy();
             }
             uint32 duration = next.windowDuration / next.windowBuckets;
-            _spendWindow[asset]
-            .configure(duration == 0 ? 1 : duration, next.windowBuckets, uint32(block.timestamp));
+            _spendWindow[asset].configure(
+                duration == 0 ? 1 : duration, next.windowBuckets, uint32(block.timestamp)
+            );
         }
     }
 }

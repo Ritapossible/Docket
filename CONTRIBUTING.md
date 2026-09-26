@@ -3,11 +3,24 @@
 ## Setup
 
 ```bash
-git clone https://github.com/Ritapossible/Docket && cd Docket
-curl -L https://foundry.paradigm.xyz | bash && foundryup   # forge, cast, anvil
-make bootstrap                                             # builds the contracts
+git clone --recurse-submodules https://github.com/Ritapossible/Docket && cd Docket
+curl -L https://foundry.paradigm.xyz | bash && foundryup --install 1.8.3   # forge, cast, anvil
+make bootstrap                                                            # builds the contracts
 npm install && npm --prefix console install
 ```
+
+Two details in there are load-bearing, both learned the hard way.
+
+**`--recurse-submodules`.** `contracts/lib/forge-std` is a submodule. Without it the remapping
+does not resolve and `forge build` fails at parse time. The default Foundry `.gitignore`
+ignores `contracts/lib/` wholesale, which hid this for weeks: the library existed on the
+machine that installed it and nowhere else, so every contracts job in CI failed on a clean
+checkout while everything passed locally.
+
+**The pinned Foundry version.** `forge fmt` output changes between releases - 1.4 and 1.8
+disagree about one call in `Mandate.sol` - and CI runs `forge fmt --check`. On a different
+version the formatter will fight you. If you need to bump it, change `.github/workflows/ci.yml`
+and reformat in the same commit.
 
 ## The one command that proves it works
 

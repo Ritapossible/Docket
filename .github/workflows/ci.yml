@@ -19,10 +19,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # forge-std is a submodule; without this the remapping does not resolve and every
+          # contracts job fails at parse time.
+          submodules: recursive
 
       - uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          # Pinned, not "stable". forge fmt's output changes between versions - 1.4 and 1.8
+          # disagree about one call in Mandate.sol - so an unpinned formatter fails the build
+          # for reasons nobody changed. Bump this deliberately and reformat in the same commit.
+          version: "1.8.3"
 
       - name: Format
         run: forge fmt --check
@@ -68,7 +75,14 @@ jobs:
         with:
           node-version: 22
 
+      # Root install as well as indexer's. The typecheck reaches into sdk/src - published.test.ts
+      # imports the ERC-8004 bindings from there - and module resolution walks up from sdk/ to
+      # the root node_modules. Installing only indexer/ left viem unresolvable from that path,
+      # which is how adding one import to a test broke a job that never runs that test.
       - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Install indexer
         working-directory: indexer
         run: npm install --no-audit --no-fund
 
@@ -109,10 +123,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # forge-std is a submodule; without this the remapping does not resolve and every
+          # contracts job fails at parse time.
+          submodules: recursive
 
       - uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          # Pinned, not "stable". forge fmt's output changes between versions - 1.4 and 1.8
+          # disagree about one call in Mandate.sol - so an unpinned formatter fails the build
+          # for reasons nobody changed. Bump this deliberately and reformat in the same commit.
+          version: "1.8.3"
 
       - uses: actions/setup-node@v4
         with:
@@ -132,10 +153,17 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          # forge-std is a submodule; without this the remapping does not resolve and every
+          # contracts job fails at parse time.
+          submodules: recursive
 
       - uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: stable
+          # Pinned, not "stable". forge fmt's output changes between versions - 1.4 and 1.8
+          # disagree about one call in Mandate.sol - so an unpinned formatter fails the build
+          # for reasons nobody changed. Bump this deliberately and reformat in the same commit.
+          version: "1.8.3"
 
       - uses: actions/setup-node@v4
         with:
