@@ -22,10 +22,18 @@ concurrency:
   group: publish-dcs1
   cancel-in-progress: false
 
+# The manifest is committed back, because the published feedbackURI points at it. A score whose
+# manifest never lands is a score nobody can verify cheaply.
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Generous because of the Sunday full walk, which is one request per 100 blocks of chain
+    # and grows. continue-on-error keeps it from blocking the daily publish, but only the job
+    # timeout keeps it from burning an hour of runner for nothing.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +45,7 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Publish
+        id: publish
         env:
           PUBLISHER_PRIVATE_KEY: ${{ secrets.PUBLISHER_PRIVATE_KEY }}
           MONAD_TESTNET_RPC: https://testnet-rpc.monad.xyz
@@ -47,8 +56,44 @@ jobs:
           fi
           node --experimental-strip-types script/publish.mjs --execute
 
+      - name: Commit the manifest
+        # Before the verification step, not after: the verifier fetches the manifest over HTTP
+        # from the default branch, so a manifest still sitting in the runner's working tree is
+        # a manifest the verifier cannot see.
+        run: |
+          if git diff --quiet -- console/public/dcs1-manifest.json; then
+            echo "manifest unchanged"
+            exit 0
+          fi
+          git config user.name  "docket-publisher"
+          git config user.email "noreply@anthropic.com"
+          git add console/public/dcs1-manifest.json
+          git commit \
+            -m "Publish DCS-1 manifest" \
+            -m "Written by .github/workflows/publish.yml alongside the on-chain score. The feedbackURI of the registry entry points at this file, and a verifier proves it complete against the mandate's nonce before trusting any block in it."
+          # The scheduled agent may have pushed while this ran.
+          git pull --rebase origin main
+          git push origin HEAD:main
+
       - name: Verify the published score recomputes
         # The point of publishing is that anyone can check it. Checking it ourselves, from a
         # cold sync, in the same run that wrote it, is the cheapest version of that promise -
         # and it is what discharges T13 in the threat model.
+        #
+        # Through the manifest, which is the path a judge will take. The weekly full walk below
+        # is what stops the manifest path from quietly becoming the only thing ever checked.
         run: npm run test:published
+
+      - name: Verify again the expensive way, Sundays
+        # A cheap check that is never compared against the expensive one is a cheap check you
+        # are trusting. Once a week, walk every block and confirm the two agree. This is the
+        # step that will start timing out as the chain grows, and that is deliberate: it should
+        # fail loudly rather than silently stop being run.
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        run: |
+          if [ "$(date -u +%u)" != "7" ]; then
+            echo "not Sunday, skipping the full walk"
+            exit 0
+          fi
+          DOCKET_FULL_REPLAY=1 npm run test:published

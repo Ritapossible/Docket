@@ -19,11 +19,15 @@
  *
  *   PUBLISHER_PRIVATE_KEY=0x… node script/publish.mjs [--execute]
  */
+import {writeFileSync} from "node:fs";
+
 import {createPublicClient, createWalletClient, defineChain, http} from "viem";
 import {privateKeyToAccount} from "viem/accounts";
 
 import {score as computeScore, SPEC_VERSION} from "../indexer/src/dcs1.ts";
+import {buildManifest} from "../indexer/src/manifest.ts";
 import {replay} from "../indexer/src/replay.ts";
+import {mandateAbi} from "../sdk/src/abi.ts";
 import {
   DCS1_TAG,
   MONAD_TESTNET_CHAIN_ID,
@@ -38,9 +42,12 @@ const EXECUTE = process.argv.includes("--execute");
 const AGENT_ID = BigInt(process.env.AGENT_ID ?? 1930);
 const MANDATE = process.env.MANDATE ?? "0x2EC195646731F274c0e500f3B671C04189446Ae9";
 const DEPLOY_BLOCK = BigInt(process.env.DEPLOY_BLOCK ?? 65577709);
+// The manifest, not the spec. A reader following feedbackURI should land on the thing that
+// lets them check the number cheaply, and the manifest names the spec it was computed under.
 const FEEDBACK_URI =
   process.env.FEEDBACK_URI ??
-  "https://raw.githubusercontent.com/Ritapossible/docket/main/spec/DCS-1.md";
+  "https://raw.githubusercontent.com/Ritapossible/docket/main/console/public/dcs1-manifest.json";
+const MANIFEST_PATH = process.env.MANIFEST_PATH ?? "console/public/dcs1-manifest.json";
 
 if (!KEY) {
   console.error("PUBLISHER_PRIVATE_KEY is required");
@@ -83,6 +90,24 @@ if (!result.coversFullHistory) {
 
 const breakdown = computeScore(result.history);
 
+// The manifest is what keeps this score verifiable as the chain grows. Read nonce at exactly
+// the height the score is pinned to - not at head, which has moved on.
+const nonceAtAsOf = await publicClient.readContract({
+  address: MANDATE,
+  abi: mandateAbi,
+  functionName: "nonce",
+  blockNumber: result.asOfBlock,
+});
+const manifest = buildManifest({
+  mandate: MANDATE,
+  chainId: MONAD_TESTNET_CHAIN_ID,
+  deployBlock: DEPLOY_BLOCK,
+  asOfBlock: result.asOfBlock,
+  nonce: BigInt(nonceAtAsOf),
+  actBlocks: result.actBlocks,
+  inputHash: result.inputHash,
+});
+
 console.log(`registry   ${REPUTATION_REGISTRY}`);
 console.log(`publisher  ${publisher.address}`);
 console.log(`agentId    ${AGENT_ID}   mandate ${MANDATE}`);
@@ -94,6 +119,10 @@ console.log(
     `U ${breakdown.authorityPpm}  B ${breakdown.breachPpm}`,
 );
 console.log(`SCORE      ${breakdown.score} / 1000`);
+console.log(
+  `manifest   ${manifest.blocks.length} act blocks, nonce ${manifest.nonce} ` +
+    `(a full replay would be ${Math.ceil(Number(result.asOfBlock - DEPLOY_BLOCK) / 100)} requests)`,
+);
 
 const args = [
   AGENT_ID,
@@ -119,6 +148,12 @@ if (!EXECUTE) {
   console.log("dry run - nothing written. Re-run with --execute to publish.");
   process.exit(0);
 }
+
+// Written before the transaction, not after. The feedbackURI in the entry points here, so a
+// manifest that never lands leaves a published score pointing at a stale file - worse than one
+// published a few seconds early, which merely points at a manifest for a score not yet posted.
+writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
+console.log(`wrote ${MANIFEST_PATH}`);
 
 const estimate = await publicClient.estimateContractGas({
   account: publisher,

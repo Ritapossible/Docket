@@ -37,6 +37,12 @@ export interface ReplayResult {
    * a replay where this is false - showing no score is better than showing a plausible one.
    */
   coversFullHistory: boolean;
+  /**
+   * Every block that carried a log from this mandate, ascending. This is what makes a cheap
+   * re-verification possible: a later verifier can fetch these blocks directly instead of
+   * walking the whole chain, and prove the list complete against `nonce` (see `manifest.ts`).
+   */
+  actBlocks: bigint[];
 }
 
 const ASSET_POLICY_ABI = [
@@ -72,6 +78,12 @@ export async function replay(
     requestsPerSecond?: number;
     /** Called every 100 chunks so a long scan does not look like a hang. */
     onProgress?: (chunk: number, total: number, logs: number) => void;
+    /**
+     * Scan only the windows covering these blocks, instead of every window in the range.
+     * Turns an O(chain age) walk into an O(acts) one. Only safe with a block list whose
+     * completeness has been proved - `verifyManifest` in `manifest.ts` is that proof.
+     */
+    atBlocks?: readonly bigint[];
   } = {fromBlock: 0n},
 ): Promise<ReplayResult> {
   // cacheTime: 0 is load-bearing. viem caches getBlockNumber for its polling interval by
@@ -117,20 +129,37 @@ export async function replay(
     }
   };
 
-  const totalChunks = Number((asOfBlock - fromBlock) / chunkSize) + 1;
+  // The windows to fetch. Either every window in the range, or - given a proved-complete list
+  // of act-bearing blocks - only the windows those blocks fall in. Same logs either way; the
+  // second costs one request per act rather than one per 100 blocks of chain.
+  const windows: Array<[bigint, bigint]> = [];
+  if (options.atBlocks) {
+    const seen = new Set<bigint>();
+    for (const block of [...options.atBlocks].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) {
+      if (block < fromBlock || block > asOfBlock) continue;
+      // Snap to a window so two acts a few blocks apart share one request.
+      const start = fromBlock + ((block - fromBlock) / chunkSize) * chunkSize;
+      if (seen.has(start)) continue;
+      seen.add(start);
+      const end = start + chunkSize - 1n;
+      windows.push([start, end > asOfBlock ? asOfBlock : end]);
+    }
+  } else {
+    for (let start = fromBlock; start <= asOfBlock; start += chunkSize) {
+      const end = start + chunkSize - 1n;
+      windows.push([start, end > asOfBlock ? asOfBlock : end]);
+    }
+  }
+
   const logs = [];
-  let done = 0;
-  for (let start = fromBlock; start <= asOfBlock; start += chunkSize) {
-    let end = start + chunkSize - 1n;
-    if (end > asOfBlock) end = asOfBlock;
+  for (const [index, [start, end]] of windows.entries()) {
     const chunk = await paced(() => client.getLogs({address: mandate, fromBlock: start, toBlock: end}));
     logs.push(...chunk);
 
     // A scan of an aged mandate takes minutes. Silence for minutes reads as a hang, and a judge
     // who kills it has not verified anything.
-    done++;
-    if (options.onProgress && (done % 100 === 0 || start + chunkSize > asOfBlock)) {
-      options.onProgress(done, totalChunks, logs.length);
+    if (options.onProgress && ((index + 1) % 100 === 0 || index + 1 === windows.length)) {
+      options.onProgress(index + 1, windows.length, logs.length);
     }
   }
 
@@ -216,6 +245,7 @@ export async function replay(
     acts,
     fromBlock,
     coversFullHistory: options.windowed !== true,
+    actBlocks: blockNumbers.slice().sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
     history: {
       allowedActs,
       firstActTime,
