@@ -469,12 +469,14 @@ bench/       Load harness and published results.
 
 Resolve by the date given; a decision recorded here beats a decision rediscovered in week five.
 
-- ~~**Gas ceiling on policy expressiveness.**~~ **Resolved, week 1.** Measured at a flat 3,372
-  gas per tracked asset with no cliff; a fully-tracked act is 95k. `MAX_TRACKED_ASSETS` stays at
-  16 to bound the loop rather than to dodge a limit. The measurement did surface a different
-  problem - the compound worst case at 64 buckets was 1.33M gas - which moved `MAX_BUCKETS` to
+- ~~**Gas ceiling on policy expressiveness.**~~ **Resolved, week 1; figures corrected week 4.**
+  No cliff: cost is linear in tracked assets. A fully-tracked act is **259k** and a real act on
+  chain costs 181,474 gas. `MAX_TRACKED_ASSETS` stays at 16 to bound the loop rather than to
+  dodge a limit. The measurement surfaced a second problem, which moved `MAX_BUCKETS` from 64 to
   16 and identified the set-call-zero allowance pair, not window eviction, as the dominant term.
-  See `bench/RESULTS.md` §2-3.
+  The earlier figure quoted here was 95k, taken on a harness that carried warm access state
+  between calls and understated every act by roughly a third; `bench/RESULTS.md` §3 has the
+  correction and how it was caught.
 - **Per-asset approval opt-in** (v2). An action approves every declared asset, but many need no
   allowance at all. Letting the `Action` say which do would cut the dominant term in the
   multi-asset worst case. Deferred: it changes the struct, and the case is already bounded.

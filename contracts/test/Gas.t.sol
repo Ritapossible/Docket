@@ -14,6 +14,16 @@ import {MockERC20} from "./mocks/MockERC20.sol";
 ///      with `trackedAssets`. Somewhere on that line the guard costs more than the action it
 ///      guards, and `MAX_TRACKED_ASSETS` belongs at that point rather than at a round number
 ///      someone liked. Run with `forge test --match-contract GasTest -vv`.
+///
+///      **The budgets below are calibrated against the forge version CI pins, and a local run
+///      on a different build may report far less.** Measured on identical code: a fully
+///      tracked act is 259,043 on 1.8.3 and 94,607 on a 1.4.2 build, because the older build
+///      carries EIP-2929 warm access state across calls within a test and the newer one does
+///      not. The newer behaviour is the realistic one - every act is its own transaction and
+///      starts cold - and the live chain agrees: a real act on the showcase mandate costs
+///      181,474 gas, against 135,890 measured here for a comparable case plus the 21,000
+///      intrinsic cost that a `gasleft()` bracket cannot see. Calibrating to the lower figure
+///      would have published a number about a third of the truth.
 contract GasTest is Test {
     address internal owner = makeAddr("owner");
     address internal agent = makeAddr("agent");
@@ -44,10 +54,10 @@ contract GasTest is Test {
     function test_fullyTrackedActStaysUnderBudget() public {
         uint256 used = _measureAct(16);
         console.log("16 tracked, gas per act:", used);
-        // 94,607 measured. The headroom absorbs cross-version noise in forge's gas accounting
-        // without being so loose that the guard stops guarding - the old 250,000 was 2.6x the
-        // real figure and would not have caught a doubling.
-        assertLt(used, 130_000, "16 tracked assets must stay under the act budget");
+        // 259,043 on CI's pinned forge. See the note at the top of this file: a local run on a
+        // build that carries warm access state between calls will report far less, and that
+        // number is not the one to trust.
+        assertLt(used, 300_000, "16 tracked assets must stay under the act budget");
     }
 
     /// @dev The worst case in WindowLib: an agent idle for longer than a whole window pays to
@@ -71,8 +81,8 @@ contract GasTest is Test {
         vm.stopPrank();
 
         console.log("worst-case window advance, gas per act:", used);
-        // 74,841 measured.
-        assertLt(used, 100_000, "a full window clear must stay bounded");
+        // 135,890 on CI's pinned forge.
+        assertLt(used, 165_000, "a full window clear must stay bounded");
     }
 
     /// @dev The true worst case, and the one that matters for sizing a block: an act that
@@ -105,10 +115,9 @@ contract GasTest is Test {
         console.log("  marginal per declared stale asset:", (used - baseline) / 15);
 
         // A regression guard set from the measurement, not from a number that sounded tidy.
-        // 1,289,395 measured; the headroom catches a change that makes an act materially more
-        // expensive without failing on noise. The dominant term is the set-call-zero allowance
+        // 1,642,206 on CI's pinned forge. The dominant term is the set-call-zero allowance
         // pair on a cold token, not the window eviction - see bench/RESULTS.md.
-        assertLt(used, 1_400_000, "compound worst case regressed");
+        assertLt(used, 1_800_000, "compound worst case regressed");
     }
 
     // ------------------------------------------------------------------------------
@@ -165,16 +174,12 @@ contract GasTest is Test {
 
         Action memory a = _action(counterparty, 0.1 ether);
 
-        // Warm the storage and the balance reads first, so the figure reflects the steady
-        // state rather than one-off cold-slot costs.
+        // A first act to settle one-off initialisation.
         vm.startPrank(agent);
         m.act(a);
 
-        // startPrank, not prank, so no cheatcode runs inside the measured region. A cheatcode
-        // between the two gasleft() reads charges its own overhead to the act, and that
-        // overhead is a property of the forge build rather than of the contract: 1.4 and 1.8
-        // differ by ~10k, enough to move this past its budget on one and not the other. An
-        // agent paying for an act does not invoke a cheatcode either.
+        // startPrank, not prank, so no cheatcode runs between the two gasleft() reads. Worth
+        // doing, but small: it is 446 gas, not the thing that made these budgets portable.
         uint256 g0 = gasleft();
         m.act(a);
         used = g0 - gasleft();

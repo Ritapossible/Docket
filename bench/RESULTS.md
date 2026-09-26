@@ -43,26 +43,32 @@ exists to bound the loop, not to dodge a cliff.
 
 | Case | Gas |
 | --- | --- |
-| Denied act (floor) | 47,154 |
-| Act, median across the suite | 53,708 |
-| 16 tracked assets, one declared | 94,607 |
-| One asset, full 16-bucket window eviction after an idle period | 74,841 |
-| 16 tracked, 15 declared, every window stale | 1,289,395 |
-| - marginal per declared stale asset | 79,579 |
+| Denied act (floor), measured on chain | 47,154 |
+| 16 tracked assets, one declared | 259,043 |
+| One asset, full 16-bucket window eviction after an idle period | 135,890 |
+| 16 tracked, 15 declared, every window stale | 1,642,206 |
 
-*Re-measured 26 September 2026 with the cheatcode moved outside the measured region; see the
-note at the end of this section. The figures moved by a few hundred gas, which is why the
-conclusions below did not change.*
+These are in-test figures and exclude the 21,000 intrinsic transaction cost, which a
+`gasleft()` bracket cannot see. The live cross-check: a real act on the showcase mandate,
+one tracked asset, costs **181,474 gas** end to end.
+
+*Corrected 26 September 2026. The figures previously in this table were about a third of the
+truth; see "how these were measured" below for what went wrong and how it was caught.*
 
 Two findings here, and the second was not what was expected.
 
-**`MAX_BUCKETS` was reduced from 64 to 16.** At 64 the compound worst case measured 1.33M gas.
-Bucket count only controls how smoothly the window slides; 16 buckets over an hour is 3m45s of
-resolution, which is ample for a spending cap and not worth a megagas spike. Single-asset
-worst-case eviction fell from 101,767 to 75,287.
+**`MAX_BUCKETS` was reduced from 64 to 16.** At 64 the compound worst case was roughly a fifth
+worse. Bucket count only controls how smoothly the window slides; 16 buckets over an hour is
+3m45s of resolution, which is ample for a spending cap and not worth a megagas spike. The
+before-and-after figures for that change were taken on the old harness and are not restated
+here, because the comparison was like-for-like at the time and the absolute numbers were not.
+The decision stands; the numbers that justified it have been retired rather than rescaled.
 
-**The dominant term is the allowance pair, not window eviction.** Of the ~79.7k marginal per
-declared stale asset, the set-call-zero allowance on a cold token is the larger share. Reducing
+**The dominant term is the allowance pair, not window eviction.** Of the marginal cost per
+declared stale asset, the set-call-zero allowance on a cold token is the larger share. This is
+the finding the correction reinforces rather than undermines: cold-token access is exactly what
+the older harness was hiding, so the allowance pair is a bigger share of the total than this
+file used to imply. Reducing
 it further would mean letting an action say which of its declared assets actually need an
 allowance, rather than approving for all of them - a change to the `Action` struct, and future
 work rather than a week-2 fix. One safe case is already skipped: an asset the call is addressed
@@ -150,18 +156,31 @@ the last few thousand blocks is not roughly right, it is confidently wrong. The 
 
 ### A note on how these were measured
 
-Each figure brackets one `act()` between two `gasleft()` reads. The original harness put
-`vm.prank(agent)` *inside* that bracket, so every number carried the cost of a cheatcode as
-well as the act.
+Each figure brackets one `act()` between two `gasleft()` reads. The numbers in this table were
+wrong for weeks, in the project's favour, and the way that happened is worth writing down.
 
-That went unnoticed because it did not change much on the forge build these numbers were first
-taken with. It surfaced when CI finally ran the contract tests for the first time, on forge
-1.8.3, and reported 1,642,652 for the compound case against a 1,400,000 budget that had passed
-locally on 1.4.2 for weeks. The contract had not changed; the tooling's cheatcode accounting
-had.
+The contract tests had never run in CI at all - `forge-std` was gitignored and untracked, so
+every contracts job died at parse time on a clean checkout. The failure was visible in the
+Actions tab the whole time and nobody, including me, opened it. Local runs passed, and local
+green was read as green.
 
-The fix is `vm.startPrank` before the measurement rather than `vm.prank` inside it, so nothing
-but the act runs between the two reads. The corrected numbers land within ~450 gas of what this
-file already claimed, which is the reassuring part: the underlying EVM cost is stable across
-forge versions, and only the harness overhead was moving. An agent paying for an act does not
-invoke a cheatcode either, so the clean figure was always the honest one to publish.
+When CI finally ran them, a fully tracked act measured 259,043 against a 250,000 budget that
+had passed locally at 94,607. My first guess was that the `vm.prank` sitting inside the
+measured region was charging its cheatcode overhead to the act. That was true, and it was
+worth fixing, and it accounted for **446 gas** of a 164,436 gas gap. It was not the answer.
+
+The answer is that the two forge builds disagree about EIP-2929 warm access state. The older
+build carries the warm set across calls within a test, so the second `act()` re-reads sixteen
+token balances that are already warm; the newer one does not. Every act is its own transaction
+and starts cold, so the newer behaviour is the correct one, and the live chain settles it:
+181,474 gas for a real act against 135,890 measured here for a comparable case plus intrinsic
+cost. The warm figure was never the steady state of anything an agent actually does.
+
+The budgets and this table are now calibrated against the forge version CI pins. A local run on
+a build with the old warm-carry behaviour will report roughly a third of these numbers; that
+run is not the one to believe.
+
+Two things generalise. A measurement harness is part of the measurement, and one that is only
+ever run in one environment has no way to tell you it is lying. And a plausible first
+explanation that survives because it is directionally right - the cheatcode really was adding
+overhead - is worth checking against the size of the discrepancy before it gets published.
