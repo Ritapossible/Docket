@@ -213,10 +213,10 @@ An early reading suggested the official endpoint accepted 10,000-block ranges. I
 ranges containing no logs for the address. With logs present it refuses anything over 100. The
 first reading was the kind that is true and useless.
 
-| | Requests | At the 25/sec cap |
+| | Requests | Wall clock |
 | --- | --- | --- |
-| Mandate age today | 2,532 | ~2 minutes |
-| Projected 13 October | ~50,000 | ~35 minutes |
+| Mandate age today | 2,532 | **152 s**, timed, 16.6 req/s sustained |
+| Projected 13 October | ~50,000 | ~50 minutes at the same rate |
 
 The scan is now paced at 20 requests a second with backoff and retry, and prints progress. That
 was not a tuning change: before it, a full replay **failed** part way through with
@@ -225,6 +225,14 @@ the whole recomputability claim rests on, had started failing locally.
 
 Pacing makes it finish; it does not make it fast. The cost is O(chain age) where it should be
 O(acts), and the gap is three orders of magnitude.
+
+**This has a deadline attached.** The T13 job in CI has a 20 minute timeout, which at the
+measured 16.6 requests a second buys roughly 1.8M blocks of chain to scan. The mandate deployed
+at block 65,577,709 and Monad produces about 281,000 blocks a day, so that budget runs out
+around **1 October** - a week before the submission, and it will fail on a schedule, quietly,
+with nobody watching. Verification of the published score is currently 46 seconds because the
+test replays to the published height rather than to head, but the publisher republishes daily,
+so that height tracks head and the cost grows with it.
 
 **The fix, not yet built.** `Mandate.nonce` is public and increments once per `act()`. A
 publisher can ship the list of act-bearing block numbers alongside the score, and a verifier can

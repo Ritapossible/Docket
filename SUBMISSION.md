@@ -188,17 +188,17 @@ drpc and Ankr - the cap is real on each and none of them accepts a 1,000-block r
 replay is therefore one request per 100 blocks of chain, paced, regardless of how few of those
 blocks contain acts.
 
-| | Requests | Time at the 25/sec cap |
+| | Requests | Wall clock |
 | --- | --- | --- |
-| Today (2,532 chunks, counted) | 2,532 | ~2 minutes |
-| Projected at judging, 13 October | ~50,000 | ~35 minutes |
+| Today | 2,532 | **152 seconds, measured** |
+| Projected at judging, 13 October | ~50,000 | ~50 minutes |
 
-The request counts are measured; the times are derived from those counts and Monad's documented
-rate cap rather than timed with a stopwatch, because the machine this was developed on routes
-through a proxy slower than the cap and would have flattered nothing.
+The first row is a timed run at 16.6 requests a second sustained. The second is that rate
+extrapolated to the chain length on 13 October.
 
 That is a real limit on the central claim and it is stated here rather than discovered by
-whoever runs it. The scan is paced and retries on rate-limit rather than dying half way, and it
+whoever runs it. It also has a date: the T13 job in CI has a 20 minute timeout, which at the
+measured rate runs out around 1 October, a week before submission. The scan is paced and retries on rate-limit rather than dying half way, and it
 prints progress so it does not read as a hang - but pacing does not make it fast, it makes it
 finish.
 
