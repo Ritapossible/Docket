@@ -68,6 +68,10 @@ export async function replay(
     chunkSize?: bigint;
     /** Set when `fromBlock` is a window start rather than the mandate's deploy block. */
     windowed?: boolean;
+    /** Requests a second. Monad's public RPC rejects above 25; the default leaves headroom. */
+    requestsPerSecond?: number;
+    /** Called every 100 chunks so a long scan does not look like a hang. */
+    onProgress?: (chunk: number, total: number, logs: number) => void;
   } = {fromBlock: 0n},
 ): Promise<ReplayResult> {
   // cacheTime: 0 is load-bearing. viem caches getBlockNumber for its polling interval by
@@ -84,22 +88,60 @@ export async function replay(
   // "anyone can recompute this" false in practice. The block is published as ERC-8004
   // metadata for exactly that reason (spec/ERC8004.md).
   const chunkSize = options.chunkSize ?? 100n;
+
+  // Monad's public RPC allows 25 requests a second and rejects the rest outright. A scan of a
+  // mandate's whole history is thousands of requests, so an unpaced loop does not slow down -
+  // it fails, several hundred requests in, with the score half computed. Verified against all
+  // three public endpoints: the 100-block cap is real on each of them and none accepts 1,000.
+  const requestsPerSecond = options.requestsPerSecond ?? 20;
+  const minIntervalMs = 1000 / requestsPerSecond;
+  let nextSlot = 0;
+
+  const paced = async <T>(fn: () => Promise<T>): Promise<T> => {
+    const now = Date.now();
+    const wait = Math.max(0, nextSlot - now);
+    nextSlot = Math.max(now, nextSlot) + minIntervalMs;
+    if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+
+    // Back off and retry rather than abandoning a scan that is most of the way done. A public
+    // endpoint can rate-limit for reasons that have nothing to do with us.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await fn();
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        const rateLimited = /limited|429|too many/i.test(message);
+        if (!rateLimited || attempt >= 5) throw e;
+        await new Promise((r) => setTimeout(r, 250 * 2 ** attempt));
+      }
+    }
+  };
+
+  const totalChunks = Number((asOfBlock - fromBlock) / chunkSize) + 1;
   const logs = [];
+  let done = 0;
   for (let start = fromBlock; start <= asOfBlock; start += chunkSize) {
     let end = start + chunkSize - 1n;
     if (end > asOfBlock) end = asOfBlock;
-    const chunk = await client.getLogs({address: mandate, fromBlock: start, toBlock: end});
+    const chunk = await paced(() => client.getLogs({address: mandate, fromBlock: start, toBlock: end}));
     logs.push(...chunk);
+
+    // A scan of an aged mandate takes minutes. Silence for minutes reads as a hang, and a judge
+    // who kills it has not verified anything.
+    done++;
+    if (options.onProgress && (done % 100 === 0 || start + chunkSize > asOfBlock)) {
+      options.onProgress(done, totalChunks, logs.length);
+    }
   }
 
   // One getBlock per distinct block, not per log.
   const blockNumbers = [...new Set(logs.map((l) => l.blockNumber!))];
   const timestamps = new Map<bigint, bigint>();
   for (const blockNumber of blockNumbers) {
-    const block = await client.getBlock({blockNumber});
+    const block = await paced(() => client.getBlock({blockNumber}));
     timestamps.set(blockNumber, block.timestamp);
   }
-  const asOfTime = (await client.getBlock({blockNumber: asOfBlock})).timestamp;
+  const asOfTime = (await paced(() => client.getBlock({blockNumber: asOfBlock}))).timestamp;
 
   let allowedActs = 0n;
   let firstActTime: bigint | null = null;

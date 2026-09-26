@@ -49,7 +49,7 @@ than a dodge - is unchanged, and it is the only thing this section was ever used
 
 | Case | Gas |
 | --- | --- |
-| Denied act (floor), measured on chain | 47,154 |
+| Denied act, measured on chain across 20 live samples (see §4b) | 76,588 |
 | 16 tracked assets, one declared | 259,043 |
 | One asset, full 16-bucket window eviction after an idle period | 135,890 |
 | 16 tracked, 15 declared, every window stale | 1,642,206 |
@@ -191,3 +191,45 @@ Two things generalise. A measurement harness is part of the measurement, and one
 ever run in one environment has no way to tell you it is lying. And a plausible first
 explanation that survives because it is directionally right - the cheatcode really was adding
 overhead - is worth checking against the size of the discrepancy before it gets published.
+
+## 6. Verification cost, and why it grows
+
+Measured 26 September 2026, and the least comfortable number in this file.
+
+A DCS-1 recomputation replays every log the mandate has emitted since deployment. Monad's public
+RPC caps `eth_getLogs` at 100 blocks and 25 requests a second, so the cost is one request per
+100 blocks of *chain*, not per act. At 307ms blocks that is about 2,810 requests per day of
+mandate age, whether the agent acted three times that day or not at all.
+
+Verified against all three public endpoints rather than assumed from one:
+
+| Endpoint | Largest range accepted with logs present |
+| --- | --- |
+| `testnet-rpc.monad.xyz` | 100 blocks |
+| `monad-testnet.drpc.org` | 100 blocks (its error names 10,000, but 1,000 is refused) |
+| `rpc.ankr.com/monad_testnet` | 100 blocks |
+
+An early reading suggested the official endpoint accepted 10,000-block ranges. It does, for
+ranges containing no logs for the address. With logs present it refuses anything over 100. The
+first reading was the kind that is true and useless.
+
+| | Requests | At the 25/sec cap |
+| --- | --- | --- |
+| Mandate age today | 2,532 | ~2 minutes |
+| Projected 13 October | ~50,000 | ~35 minutes |
+
+The scan is now paced at 20 requests a second with backoff and retry, and prints progress. That
+was not a tuning change: before it, a full replay **failed** part way through with
+`requests limited to 25/sec`, which is how this was found - the T13 verification test, the one
+the whole recomputability claim rests on, had started failing locally.
+
+Pacing makes it finish; it does not make it fast. The cost is O(chain age) where it should be
+O(acts), and the gap is three orders of magnitude.
+
+**The fix, not yet built.** `Mandate.nonce` is public and increments once per `act()`. A
+publisher can ship the list of act-bearing block numbers alongside the score, and a verifier can
+prove that list complete by comparing its length against `nonce` read on chain at the pinned
+height. An omitted act shows up as a count mismatch; a fabricated one has no logs behind it. So
+verification stays trustless while dropping to one request per act - about 1,100 at judging
+rather than 50,000. It needs no contract change and no redeployment, which matters, because
+redeploying would reset the age term and that is the one input to DCS-1 that cannot be bought.

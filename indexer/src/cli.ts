@@ -94,6 +94,15 @@ async function main(): Promise<number> {
     fromBlock: options.from,
     asOfBlock: options.at,
     chunkSize: options.chunk,
+    // A full scan of an aged mandate is thousands of paced requests and takes minutes. To
+    // stderr so --json stays machine-readable.
+    onProgress: options.json
+      ? undefined
+      : (chunk, total, logs) => {
+          const pct = Math.floor((chunk / total) * 100);
+          process.stderr.write(`\rscanning ${pct}%  ${chunk}/${total} chunks  ${logs} logs`);
+          if (chunk >= total) process.stderr.write("\n");
+        },
   });
   const breakdown = score(result.history);
 
