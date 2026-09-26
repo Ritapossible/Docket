@@ -28,16 +28,22 @@ with no cliff:
 
 | Tracked assets | Gas per act | Marginal |
 | --- | --- | --- |
-| 1 (native only) | 44,465 | - |
-| 2 | 47,838 | 3,373 |
-| 4 | 54,582 | 3,372 |
-| 8 | 68,072 | 3,372 |
-| 16 | 95,053 | 3,372 |
+| 1 (native only) | 110,968 | - |
+| 2 | 120,828 | 9,860 |
+| 4 | 140,572 | 9,872 |
+| 8 | 180,062 | 9,872 |
+| 16 | 259,043 | 9,872 |
 
 **`MAX_TRACKED_ASSETS` stays at 16, now for a reason.** `ARCHITECTURE.md` §9 asked where the
 guard starts costing more than the action it guards. The answer is that it does not, within any
-plausible range: the marginal cost is a flat 3,372 gas and a fully-tracked act is 95k. The cap
-exists to bound the loop, not to dodge a cliff.
+plausible range: the marginal cost is flat at 9,872 gas. The cap exists to bound the loop, not
+to dodge a cliff.
+
+*Corrected 26 September 2026, same cause as §3. This table previously read 44,465 to 95,053
+with a flat marginal of 3,372, taken on a harness that kept token balances warm between calls.
+Each tracked asset costs a cold account access and a cold balance read on every act, which is
+most of the real 9,872. The shape finding - linear, no cliff, so the cap is a choice rather
+than a dodge - is unchanged, and it is the only thing this section was ever used to decide.*
 
 ## 3. Gas per act, worst cases
 
@@ -47,6 +53,7 @@ exists to bound the loop, not to dodge a cliff.
 | 16 tracked assets, one declared | 259,043 |
 | One asset, full 16-bucket window eviction after an idle period | 135,890 |
 | 16 tracked, 15 declared, every window stale | 1,642,206 |
+| - marginal per declared stale asset | 92,137 |
 
 These are in-test figures and exclude the 21,000 intrinsic transaction cost, which a
 `gasleft()` bracket cannot see. The live cross-check: a real act on the showcase mandate,

@@ -470,8 +470,8 @@ bench/       Load harness and published results.
 Resolve by the date given; a decision recorded here beats a decision rediscovered in week five.
 
 - ~~**Gas ceiling on policy expressiveness.**~~ **Resolved, week 1; figures corrected week 4.**
-  No cliff: cost is linear in tracked assets. A fully-tracked act is **259k** and a real act on
-  chain costs 181,474 gas. `MAX_TRACKED_ASSETS` stays at 16 to bound the loop rather than to
+  No cliff: cost is linear in tracked assets at a flat **9,872** gas each. A fully-tracked act
+  is **259k** and a real act on chain costs 181,474 gas. `MAX_TRACKED_ASSETS` stays at 16 to bound the loop rather than to
   dodge a limit. The measurement surfaced a second problem, which moved `MAX_BUCKETS` from 64 to
   16 and identified the set-call-zero allowance pair, not window eviction, as the dominant term.
   The earlier figure quoted here was 95k, taken on a harness that carried warm access state
