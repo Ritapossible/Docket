@@ -63,6 +63,14 @@ export interface ActManifest {
   blocks: string[];
   /** The `inputHash` the publisher computed, for a fast mismatch check before recomputing. */
   inputHash: Hex;
+  /**
+   * The block carrying the `NewFeedback` event for this score. Lets a verifier find the
+   * on-chain `feedbackHash` in one request instead of searching a range it cannot bound -
+   * `eth_getLogs` is capped at 100 blocks, so "scan from here to latest" is not available.
+   * Absent on a manifest written before its transaction landed.
+   */
+  publishBlock?: string;
+  publishTx?: Hex;
 }
 
 export function buildManifest(input: {
@@ -73,6 +81,8 @@ export function buildManifest(input: {
   nonce: bigint;
   actBlocks: readonly bigint[];
   inputHash: Hex;
+  publishBlock?: bigint;
+  publishTx?: Hex;
 }): ActManifest {
   return {
     version: MANIFEST_VERSION,
@@ -85,6 +95,8 @@ export function buildManifest(input: {
       .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
       .map((b) => b.toString()),
     inputHash: input.inputHash,
+    ...(input.publishBlock === undefined ? {} : {publishBlock: input.publishBlock.toString()}),
+    ...(input.publishTx === undefined ? {} : {publishTx: input.publishTx}),
   };
 }
 

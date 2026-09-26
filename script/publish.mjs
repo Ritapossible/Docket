@@ -149,11 +149,9 @@ if (!EXECUTE) {
   process.exit(0);
 }
 
-// Written before the transaction, not after. The feedbackURI in the entry points here, so a
-// manifest that never lands leaves a published score pointing at a stale file - worse than one
-// published a few seconds early, which merely points at a manifest for a score not yet posted.
-writeFileSync(MANIFEST_PATH, `${JSON.stringify(manifest, null, 2)}\n`);
-console.log(`wrote ${MANIFEST_PATH}`);
+// The manifest is written after the transaction, so it can carry the block the NewFeedback
+// event landed in. Without that a verifier has to search for the event, and eth_getLogs is
+// capped at 100 blocks - "from the scored height to latest" is not a query anyone can make.
 
 const estimate = await publicClient.estimateContractGas({
   account: publisher,
@@ -174,6 +172,14 @@ if (receipt.status !== "success") {
   console.error(`giveFeedback reverted: ${hash}`);
   process.exit(1);
 }
+
+const published = {
+  ...manifest,
+  publishBlock: receipt.blockNumber.toString(),
+  publishTx: hash,
+};
+writeFileSync(MANIFEST_PATH, `${JSON.stringify(published, null, 2)}\n`);
+console.log(`wrote ${MANIFEST_PATH}`);
 
 // Read it back through the public path a consumer would use, not through the receipt. This is
 // the check that would have caught publishing to a dead address.

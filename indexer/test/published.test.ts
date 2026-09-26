@@ -101,19 +101,26 @@ test("_T13_ a published DCS-1 score recomputes from a cold sync", {skip}, async 
       const asOfBlock = BigInt(tag2);
       assert.ok(asOfBlock >= DEPLOY_BLOCK, `tag2 ${tag2} predates the mandate`);
 
-      // feedbackHash lives on the NewFeedback event, not in readFeedback's return. It is what
-      // ties a manifest to the entry it claims to explain.
-      const events = await client.getContractEvents({
-        address: REPUTATION_REGISTRY,
-        abi: reputationRegistryAbi,
-        eventName: "NewFeedback",
-        args: {agentId: AGENT_ID, clientAddress: publisher},
-        fromBlock: asOfBlock,
-        toBlock: "latest",
-      });
-      const feedbackHash = events.find((e) => e.args.feedbackIndex === i)?.args.feedbackHash;
-
       const manifest = await loadManifest(asOfBlock);
+
+      // feedbackHash lives on the NewFeedback event, not in readFeedback's return, and it is
+      // what ties a manifest to the entry it claims to explain. The manifest names the block
+      // the event landed in, so this is one request - searching for it is not an option,
+      // because eth_getLogs is capped at 100 blocks and the range is unbounded.
+      let feedbackHash: `0x${string}` | undefined;
+      if (manifest?.publishBlock) {
+        const at = BigInt(manifest.publishBlock);
+        const events = await client.getContractEvents({
+          address: REPUTATION_REGISTRY,
+          abi: reputationRegistryAbi,
+          eventName: "NewFeedback",
+          args: {agentId: AGENT_ID, clientAddress: publisher},
+          fromBlock: at,
+          toBlock: at,
+        });
+        feedbackHash = events.find((e) => e.args.feedbackIndex === i)?.args.feedbackHash;
+      }
+
       const atBlocks = manifest?.blocks.map((b) => BigInt(b));
 
       const result = await replay(client, MANDATE, {
