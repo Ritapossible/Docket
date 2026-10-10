@@ -70,6 +70,9 @@ matters is not that a key exists, but what holding it is worth.
 limit, allowlist a counterparty, unpause, or withdraw. If an attacker steals it outright they
 inherit exactly the mandate's own bounds, the owner can rotate the key in one block, and a
 guardian can pause instantly. That is threat-model row T2, and there is a test named for it.
+(On the deployed mandate the guardian and the owner are the same key, which weakens T7 and is
+written up in `spec/THREAT-MODEL.md` rather than left for a reader to find in the deployment
+record.)
 
 Bounded is not zero, and the honest limits are these: a thief can spend up to the caps, to
 addresses already on the allowlist, until someone notices; and it can deliberately attempt
@@ -184,4 +187,4 @@ holds policy and the identity, the agent can call `act()` and nothing else, and 
 posts scores while owning nothing. The registry rejects feedback from an identity's own owner,
 so the score on chain provably was not self-awarded.
 
-Outstanding: the demo video and the submission write-up.
+The submission write-up is [`SUBMISSION.md`](SUBMISSION.md). Outstanding: a demo video.

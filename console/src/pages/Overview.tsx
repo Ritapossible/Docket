@@ -3,17 +3,16 @@ import {Connect} from "../components/Connect.tsx";
 import {ScorePanel} from "../components/ScorePanel.tsx";
 import {Eyebrow, Panel, Stat} from "../components/Sections.tsx";
 import {href} from "../router.ts";
-import type {Connection, MandateView} from "../lib/chain.ts";
+import {SHOWCASE, type Connection, type MandateView} from "../lib/chain.ts";
 import {formatEth, shortAddress} from "../lib/format.ts";
 import {usePublishedScore} from "../lib/published.ts";
 
 const TESTNET = {
-  showcase: "0x2EC195646731F274c0e500f3B671C04189446Ae9",
-  deployBlock: "65577709",
-  /** ERC-8004 identity for the showcase mandate. Its DCS-1 scores are read from the registry. */
-  agentId: 1930n,
-  rpc: "https://testnet-rpc.monad.xyz",
-  explorer: "https://testnet.monadexplorer.com/address/0x2EC195646731F274c0e500f3B671C04189446Ae9",
+  showcase: SHOWCASE.mandate,
+  deployBlock: SHOWCASE.deployBlock.toString(),
+  agentId: SHOWCASE.agentId,
+  rpc: SHOWCASE.rpc,
+  explorer: SHOWCASE.explorer,
 };
 
 export function Overview({

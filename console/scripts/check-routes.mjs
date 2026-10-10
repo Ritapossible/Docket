@@ -27,7 +27,10 @@ for (const route of ROUTES) {
   const fatal = [];
   page.on("pageerror", (e) => fatal.push(String(e)));
 
-  await page.goto(`${base}/${route.hash}`, {waitUntil: "networkidle"});
+  // connect=none: the console now defaults to the live showcase mandate, which polls every
+  // two seconds, so a connected page never reaches network-idle. These checks are about
+  // routing, not chain state. The bare URL is asserted separately below.
+  await page.goto(`${base}/?connect=none${route.hash}`, {waitUntil: "networkidle"});
   await page.waitForTimeout(700);
 
   const h1 = (await page.locator("h1").first().textContent().catch(() => "")) ?? "";
@@ -48,7 +51,7 @@ for (const route of ROUTES) {
 
 // The nav must actually navigate, not just look like it does.
 const page = await browser.newPage({viewport: {width: 1280, height: 900}});
-await page.goto(base, {waitUntil: "networkidle"});
+await page.goto(`${base}/?connect=none`, {waitUntil: "networkidle"});
 const hrefs = await page.locator(".masthead nav a").evaluateAll((els) =>
   els.map((e) => e.getAttribute("href") ?? ""),
 );
@@ -65,6 +68,67 @@ if (offsite.length > 0) {
 }
 
 await page.close();
+// What a judge sees when they open the plain link with no query string.
+//
+// Until 10 October this showed an empty form with an RPC field reading http://127.0.0.1:8545.
+// Every link we published carried a query string, so the broken path was the only one nobody
+// on the team ever took.
+//
+// The first version of this check tested for the string "127.0.0.1" in the body text and for
+// the showcase address appearing somewhere on the page. Both passed against the broken build:
+// the localhost value lives in an input's `value`, which innerText does not see, and the
+// address is printed in the "watch the live mandate" band whether or not anything is
+// connected. Two assertions, neither capable of failing. These two discriminate instead:
+// the connect form's own input, and the disconnect control that only exists once a sync has
+// produced a view. domcontentloaded, not networkidle - a connected console polls forever.
+{
+  const bare = await browser.newPage({viewport: {width: 1280, height: 900}});
+  await bare.goto(base, {waitUntil: "domcontentloaded"});
+
+  // Wait for the sync before judging the page. The connect form is on screen until the first
+  // view arrives and is then replaced, so asserting its absence immediately races the chain
+  // and fails against a build that is working perfectly.
+  //
+  // `disconnect` renders only when a live view exists, so it proves a real sync completed
+  // rather than merely that a connection object was constructed.
+  const synced = await bare
+    .locator("text=disconnect")
+    .first()
+    .waitFor({timeout: 45_000})
+    .then(() => true)
+    .catch(() => false);
+
+  if (synced) {
+    console.log("\nok   the bare URL syncs the showcase mandate");
+  } else {
+    console.log("\nFAIL the bare URL never reached a live view of the showcase mandate");
+    failures += 1;
+  }
+
+  const form = await bare.locator('input[placeholder^="mandate address"]').count();
+  if (form > 0) {
+    console.log("FAIL the bare URL still shows the connect form after syncing");
+    failures += 1;
+  } else {
+    console.log("ok   the connect form is gone once the mandate is live");
+  }
+  await bare.close();
+}
+
+// ...and the escape hatch the route checks above rely on must still give the empty form.
+{
+  const blank = await browser.newPage({viewport: {width: 1280, height: 900}});
+  await blank.goto(`${base}/?connect=none`, {waitUntil: "networkidle"});
+  const form = await blank.locator('input[placeholder^="mandate address"]').count();
+  console.log(
+    form === 1
+      ? "ok   ?connect=none still offers the connect form"
+      : "FAIL ?connect=none did not offer the connect form",
+  );
+  if (form !== 1) failures += 1;
+  await blank.close();
+}
+
 await browser.close();
 
 if (failures > 0) {

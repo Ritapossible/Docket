@@ -197,10 +197,47 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
 }
 
 /** Reads the connection out of the URL so a demo can be handed over as a link. */
+/**
+ * The deployed showcase mandate on Monad testnet.
+ *
+ * Exported so the console has one source of truth for it. The Overview page used to carry its
+ * own copy, which is the sort of duplication that is correct until the day it is not.
+ */
+export const SHOWCASE = {
+  mandate: "0x2EC195646731F274c0e500f3B671C04189446Ae9",
+  rpc: "https://testnet-rpc.monad.xyz",
+  deployBlock: 65577709n,
+  /** ERC-8004 identity. Its DCS-1 scores are read from the Reputation Registry. */
+  agentId: 1930n,
+  explorer: "https://testnet.monadexplorer.com/address/0x2EC195646731F274c0e500f3B671C04189446Ae9",
+} as const;
+
+/**
+ * What the console should connect to on load.
+ *
+ * **Defaults to the live showcase mandate**, which it did not until 10 October. Before that a
+ * bare URL returned null, so the page opened on an empty form with an RPC field reading
+ * `http://127.0.0.1:8545`. Every query-string link we published worked, which is exactly why
+ * nobody noticed: the one visitor who matters, someone opening the plain link with no idea
+ * what to paste into it, saw a localhost form and no score.
+ *
+ * `?connect=none` restores the empty form. The route checks use it, because a live connection
+ * polls every two seconds and a page that never goes network-idle cannot be waited on.
+ */
 export function connectionFromUrl(): Connection | null {
   const params = new URLSearchParams(window.location.search);
+  if (params.get("connect") === "none") return null;
+
   const mandate = params.get("mandate");
-  if (!mandate) return null;
+  if (!mandate) {
+    return {
+      rpc: SHOWCASE.rpc,
+      mandate: SHOWCASE.mandate,
+      fromBlock: SHOWCASE.deployBlock,
+      forceFullSync: params.get("full") === "1",
+    };
+  }
+
   return {
     rpc: params.get("rpc") ?? "http://127.0.0.1:8545",
     mandate,

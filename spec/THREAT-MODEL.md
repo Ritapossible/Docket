@@ -15,7 +15,7 @@ optimism. Rows marked **partial** or **not covered** are real and are rendered i
 | T4 | Drain through a standing allowance | `approve`/`permit`/`setApprovalForAll` are never allowlistable; allowances are set and zeroed inside one transaction | covered |
 | T5 | An allowlisted counterparty turns malicious | loss is bounded to the declared outflow | partial |
 | T6 | The owner's console is compromised and limits are raised | loosening is timelocked and publicly queued; there is no admin key | covered |
-| T7 | The owner's key is fully compromised | the timelock creates a detection window; the guardian can pause within it | partial |
+| T7 | The owner's key is fully compromised | the timelock creates a detection window. **On the deployed mandate the guardian is the owner, so the guardian half of this does not hold** | partial |
 | T8 | An untracked asset is drained - an NFT, or a token received during the call | the balance assertion covers `trackedAssets` and nothing else | not covered |
 | T9 | Reentrancy into `act()` | `nonReentrant`, plus the agent-only check as a second layer | covered |
 | T10 | A compromised key spams denials to tank the mandate's score | the agent pays gas for its own refusals; DCS-1 separates hard from soft breaches | partial |
@@ -56,7 +56,23 @@ slippage. It cannot make a counterparty honest - if the agent declares 100 and t
 takes exactly 100 while delivering nothing, that is a bad trade, not a policy breach. Docket
 bounds the loss; it does not price the deal.
 
-**T7.** With the owner key an attacker can queue any loosening, but not execute it before the
+**T7, and a configuration that undercuts it.** On the deployed showcase mandate the guardian
+and the owner are the same address, `0x2602…2579`. The contract supports a distinct guardian -
+`setGuardian` is a live function and the constructor takes the two separately - but this
+deployment was never given one.
+
+That matters because the guardian exists for exactly the case where the owner key is gone. An
+attacker holding the owner key on this mandate holds the guardian key too, so "the guardian can
+pause inside the timelock window" is not a defence here; it is the attacker pausing, if they
+feel like it. What survives is the timelock itself and the public `LoosenQueued` event, which
+are real and which do not depend on a second key.
+
+It is stated here rather than quietly fixed because fixing it properly means a guardian key
+held by someone other than the owner, and a second key the same person holds in the same place
+is theatre. The honest version of T7 on this deployment is: the timelock buys an hour and makes
+the attempt public, and nothing stops a determined owner-key holder after that.
+
+With the owner key an attacker can queue any loosening, but not execute it before the
 delay, and the `LoosenQueued` event is public. The guardian exists precisely for this window and
 can pause instantly. If the owner key and the guardian key are both lost, the timelock is the
 only remaining protection and it expires.

@@ -229,8 +229,12 @@ a CI gate fails the build if a row claims coverage no test backs):
   calldata is future work.
 - **T5, partial.** Loss is bounded to the declared outflow. Docket cannot make a counterparty
   honest; it bounds the loss, it does not price the deal.
-- **T7, partial.** With the owner key an attacker can queue any loosening but not execute it
-  before the timelock; the guardian can pause inside that window.
+- **T7, partial, and weaker than it reads.** With the owner key an attacker can queue any
+  loosening but not execute it before the timelock. The threat model also credits a guardian
+  that can pause inside that window - but on the deployed mandate the guardian and the owner
+  are the same address, so an attacker with the owner key has both. The timelock and the
+  public `LoosenQueued` event are the real defence here; the guardian is not one until it is
+  a key someone else holds.
 - **T10, partial.** An attacker holding the agent key can spam denials and tank the mandate's own
   score. Correct for honesty, unhelpful here.
 

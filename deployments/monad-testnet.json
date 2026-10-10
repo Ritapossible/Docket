@@ -7,7 +7,10 @@
   "commit": "549018101bf43a53fe5731fd412bffff584cbaf9",
   "solc": "0.8.26",
   "evmVersion": "cancun",
-  "optimizer": {"enabled": true, "runs": 20000},
+  "optimizer": {
+    "enabled": true,
+    "runs": 20000
+  },
   "note": "Two mandates, deliberately. The benchmark run leaves 20 hard breaches on whichever mandate it targets, which caps DCS-1's breach term and pins that mandate's score at 0 - correct behaviour, and useless for showing the arc from good conduct to a refusal. So the latency benchmark has its own mandate and the showcase has a clean record.",
   "accounts": {
     "owner": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
@@ -15,7 +18,7 @@
     "guardian": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
     "publisher": "0xA5F16dB3bA4385F80c368a0f1110c97f8eC68001"
   },
-  "accountNote": "Three keys, three jobs. The owner holds policy and the ERC-8004 identity and is not in CI. The agent can call act() and nothing else and lives in a GitHub Actions secret. The publisher posts DCS-1 scores, owns nothing, and could be replaced by any stranger running the same indexer. The registry enforces the last split rather than trusting it: giveFeedback reverts with 'Self-feedback not allowed' for the identity's owner or operators.",
+  "accountNote": "Three keys, three jobs. The owner holds policy and the ERC-8004 identity and is not in CI. The agent can call act() and nothing else and lives in a GitHub Actions secret. The publisher posts DCS-1 scores, owns nothing, and could be replaced by any stranger running the same indexer. The registry enforces the last split rather than trusting it: giveFeedback reverts with 'Self-feedback not allowed' for the identity's owner or operators. The guardian is the owner address on this deployment, which means threat-model row T7 gets no benefit from it: an attacker holding the owner key holds the guardian key too. setGuardian can point it elsewhere, but a second key the same person holds in the same place would be theatre, so it is disclosed in spec/THREAT-MODEL.md instead.",
   "erc8004": {
     "identityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
     "reputationRegistry": "0x8004B663056A597Dffe9eCcC1965A193B7388713",
@@ -50,9 +53,21 @@
         "agent": "0x0536468C3565198672Ad61A178f822C3D997c65C",
         "guardian": "0x26027f01110e4D3581C470f9B98E5dd5ef1e2579",
         "loosenDelay": 3600,
-        "policy": {"expiry": 0, "rateCap": 30, "rateWindow": 200, "rateBuckets": 10, "slippageBps": 0, "mode": "Observe"}
+        "policy": {
+          "expiry": 0,
+          "rateCap": 30,
+          "rateWindow": 200,
+          "rateBuckets": 10,
+          "slippageBps": 0,
+          "mode": "Observe"
+        }
       },
-      "nativeAssetPolicy": {"perActionCap": "0.5 MON", "windowCap": "5 MON", "windowDuration": 3600, "windowBuckets": 12},
+      "nativeAssetPolicy": {
+        "perActionCap": "0.5 MON",
+        "windowCap": "5 MON",
+        "windowDuration": 3600,
+        "windowBuckets": 12
+      },
       "loosening": {
         "call": "allowCall(0x000000000000000000000000000000000000c0DE, 0x00000000)",
         "queueTx": "queueLoosen at deploy",
