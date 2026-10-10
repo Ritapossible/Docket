@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef, useState} from "react";
 import {createPublicClient, http, isAddress, type Address, type PublicClient} from "viem";
 
 import {score} from "../../../indexer/src/dcs1.ts";
+import {type ActManifest, verifyManifest} from "../../../indexer/src/manifest.ts";
 import {replay} from "../../../indexer/src/replay.ts";
 import type {ActRecord, ScoreBreakdown} from "../../../indexer/src/types.ts";
 import {mandateAbi} from "../../../sdk/src/abi.ts";
@@ -20,6 +21,34 @@ const FULL_SYNC_MAX_BLOCKS = 20_000n;
 /** Default live window when a full scan is impractical. ~25 minutes at 307ms blocks. */
 const DEFAULT_WINDOW_BLOCKS = 5_000n;
 
+/**
+ * The act manifest this console publishes next to itself.
+ *
+ * It lists every block of the showcase mandate's history that carried a log, so the console can
+ * fetch those blocks directly instead of walking the chain. That is the same O(acts) shortcut
+ * the indexer uses, and the console needs it for the same reason: a windowed scan shows the
+ * last 25 minutes, the agent acts every eight hours, so the stream was empty almost always -
+ * a page arguing that every refusal is a permanent public record, displaying none of them.
+ *
+ * It is never trusted on its word. `verifyManifest` proves the block list complete against the
+ * mandate's own `nonce` before a single act from it reaches the screen, and anything that does
+ * not verify falls back to the window rather than being shown.
+ */
+async function loadManifest(mandate: Address): Promise<ActManifest | null> {
+  try {
+    const response = await fetch(new URL("dcs1-manifest.json", document.baseURI), {
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const manifest = (await response.json()) as ActManifest;
+    if (manifest.mandate?.toLowerCase() !== mandate.toLowerCase()) return null;
+    if (!Array.isArray(manifest.blocks) || manifest.blocks.length === 0) return null;
+    return manifest;
+  } catch {
+    return null;
+  }
+}
+
 export interface MandateView {
   acts: ActRecord[];
   /**
@@ -33,6 +62,11 @@ export interface MandateView {
   coversFullHistory: boolean;
   syncedFrom: bigint;
   asOfBlock: bigint;
+  /**
+   * The chain's own act count, read from `nonce()`. Authoritative where `acts.length` is not:
+   * the stream holds what this browser managed to fetch, and this is how many there really are.
+   */
+  nonce: bigint;
   balance: bigint;
   paused: boolean;
   mode: number;
@@ -110,25 +144,88 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
           status: "loading",
           detail: full
             ? `Reading ${span} blocks from deployment.`
-            : `History is ${span} blocks. Showing the most recent ${DEFAULT_WINDOW_BLOCKS}.`,
+            : `History is ${span} blocks. Reading the published act manifest.`,
         });
 
-        const first = await replay(client, mandate, {
-          fromBlock: start,
-          asOfBlock: head,
-          chunkSize: 100n,
-          windowed: !full,
-        });
+        // The cheap complete path, when a verifiable manifest covers this mandate.
+        const manifest = full ? null : await loadManifest(mandate);
+        let seeded: SyncState | null = null;
 
-        previous = {
-          cursor: head,
-          acts: first.acts,
-          score: full ? score(first.history) : null,
-          scoredAtBlock: full ? first.asOfBlock : null,
-          inputHash: full ? first.inputHash : null,
-          coversFullHistory: full,
-          syncedFrom: start,
-        };
+        if (manifest) {
+          try {
+            const manifestAsOf = BigInt(manifest.asOfBlock);
+            const walked = await replay(client, mandate, {
+              fromBlock: connection.fromBlock,
+              asOfBlock: manifestAsOf,
+              chunkSize: 100n,
+              atBlocks: manifest.blocks.map((b) => BigInt(b)),
+            });
+
+            // Before anything from it is shown. A manifest that does not verify is not a
+            // lower-confidence manifest, it is evidence someone published something wrong.
+            await verifyManifest(
+              client,
+              manifest,
+              manifestAsOf,
+              walked.acts.map((a) => a.id),
+              walked.inputHash,
+            );
+
+            // Then the head, for acts newer than the manifest. Bounded: the manifest is
+            // republished daily so the gap is hours, but a stale one must not silently turn
+            // into a thousand-request walk on page load.
+            const windowFrom = head > DEFAULT_WINDOW_BLOCKS ? head - DEFAULT_WINDOW_BLOCKS : 0n;
+            const tailFrom = manifestAsOf + 1n > windowFrom ? manifestAsOf + 1n : windowFrom;
+            const tail =
+              tailFrom <= head
+                ? await replay(client, mandate, {
+                    fromBlock: tailFrom,
+                    asOfBlock: head,
+                    chunkSize: 100n,
+                    windowed: true,
+                  })
+                : null;
+
+            seeded = {
+              cursor: head,
+              acts: [...walked.acts, ...(tail?.acts ?? [])],
+              // Complete at the manifest's height, which is what a DCS-1 score needs: a value,
+              // a spec version, a block height and an inputHash. Not complete at `head`, and
+              // the panel pins the number to `scoredAtBlock` rather than to now.
+              score: score(walked.history),
+              scoredAtBlock: manifestAsOf,
+              inputHash: walked.inputHash,
+              coversFullHistory: true,
+              syncedFrom: connection.fromBlock,
+            };
+          } catch {
+            // Fall through to the window. Showing the last 25 minutes is a worse page than
+            // showing the whole history; showing a history that failed its proof is worse
+            // than either.
+            seeded = null;
+          }
+        }
+
+        if (seeded === null) {
+          const first = await replay(client, mandate, {
+            fromBlock: start,
+            asOfBlock: head,
+            chunkSize: 100n,
+            windowed: !full,
+          });
+
+          seeded = {
+            cursor: head,
+            acts: first.acts,
+            score: full ? score(first.history) : null,
+            scoredAtBlock: full ? first.asOfBlock : null,
+            inputHash: full ? first.inputHash : null,
+            coversFullHistory: full,
+            syncedFrom: start,
+          };
+        }
+
+        previous = seeded;
       } else if (head > previous.cursor!) {
         // Only the blocks nobody has read yet.
         const next = await replay(client, mandate, {
@@ -147,13 +244,14 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
       sync.current = previous;
 
       const base = {address: mandate, abi: mandateAbi} as const;
-      const [balance, paused, agent, owner, loosenDelay, policy] = await Promise.all([
+      const [balance, paused, agent, owner, loosenDelay, policy, nonce] = await Promise.all([
         client.getBalance({address: mandate}),
         client.readContract({...base, functionName: "paused"}),
         client.readContract({...base, functionName: "agent"}),
         client.readContract({...base, functionName: "owner"}),
         client.readContract({...base, functionName: "loosenDelay"}),
         client.readContract({...base, functionName: "policy"}),
+        client.readContract({...base, functionName: "nonce"}),
       ]);
 
       setState({
@@ -166,6 +264,7 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
           coversFullHistory: previous.coversFullHistory,
           syncedFrom: previous.syncedFrom,
           asOfBlock: head,
+          nonce,
           balance,
           paused,
           mode: Number(policy[5]),

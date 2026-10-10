@@ -70,7 +70,7 @@ export function Overview({
                     label="Mode"
                     value={view.paused ? "PAUSED" : view.mode === 1 ? "ENFORCE" : "OBSERVE"}
                   />
-                  <Stat label="Acts recorded" value={view.acts.length} />
+                  <Stat label="Acts recorded" value={view.nonce.toString()} />
                   <Stat label="Agent key" value={shortAddress(view.agent)} mono />
                   <Stat label="Owner" value={shortAddress(view.owner)} mono />
                 </div>
@@ -96,7 +96,7 @@ export function Overview({
       {view && connection ? (
         <section className="shell" style={{paddingTop: 14}}>
           <div style={{display: "grid", gap: 14}}>
-            <ActStream acts={view.acts} live />
+            <ActStream acts={view.acts} live total={view.nonce} />
             <ScorePanel
               score={view.score}
               inputHash={view.inputHash}

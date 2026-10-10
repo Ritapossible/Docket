@@ -9,8 +9,21 @@ const VERDICT: Record<ActRecord["kind"], {word: string; className: string}> = {
   Failed: {word: "FAILED", className: "verdict failed"},
 };
 
-export function ActStream({acts, live}: {acts: ActRecord[]; live: boolean}) {
+export function ActStream({
+  acts,
+  live,
+  total,
+}: {
+  acts: ActRecord[];
+  live: boolean;
+  /** `nonce` from the chain. The stream can hold fewer; saying so is cheaper than implying it. */
+  total?: bigint;
+}) {
   const newestFirst = [...acts].reverse();
+  // `nonce` increments on every act() call, refusals included - it is what verifyManifest
+  // proves the manifest complete against - so the comparison is against every act held here,
+  // not the allowed ones.
+  const missing = total === undefined ? 0n : total - BigInt(acts.length);
 
   return (
     <Panel
@@ -49,6 +62,13 @@ export function ActStream({acts, live}: {acts: ActRecord[]; live: boolean}) {
           })
         )}
       </div>
+      {missing > 0n ? (
+        <div className="caption" style={{padding: "0 1.1rem 0.9rem"}}>
+          The chain counts {total!.toString()} acts. This stream shows the {acts.length} the
+          published manifest and the live window reach; the rest fall in the gap between them.
+          Reload with <code>&amp;full=1</code> to walk every block.
+        </div>
+      ) : null}
     </Panel>
   );
 }
