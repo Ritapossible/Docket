@@ -65,7 +65,12 @@ export function Overview({
               <div className="panel-body">
                 <div className="stats">
                   <Stat label="Balance" value={`${formatEth(view.balance)} MON`} />
-                  <Stat label="DCS-1" value={view.score ? view.score.score : "windowed"} />
+                  <Stat
+                    label="DCS-1"
+                    value={
+                      view.score ? view.score.score : view.syncing ? "reading" : "windowed"
+                    }
+                  />
                   <Stat
                     label="Mode"
                     value={view.paused ? "PAUSED" : view.mode === 1 ? "ENFORCE" : "OBSERVE"}
@@ -96,7 +101,7 @@ export function Overview({
       {view && connection ? (
         <section className="shell" style={{paddingTop: 14}}>
           <div style={{display: "grid", gap: 14}}>
-            <ActStream acts={view.acts} live total={view.nonce} />
+            <ActStream acts={view.acts} live total={view.nonce} syncing={view.syncing} />
             <ScorePanel
               score={view.score}
               inputHash={view.inputHash}

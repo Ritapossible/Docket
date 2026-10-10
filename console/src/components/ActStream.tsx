@@ -13,17 +13,21 @@ export function ActStream({
   acts,
   live,
   total,
+  syncing,
 }: {
   acts: ActRecord[];
   live: boolean;
   /** `nonce` from the chain. The stream can hold fewer; saying so is cheaper than implying it. */
   total?: bigint;
+  /** The history walk is still running. Empty then means "not yet", not "none". */
+  syncing?: boolean;
 }) {
   const newestFirst = [...acts].reverse();
   // `nonce` increments on every act() call, refusals included - it is what verifyManifest
   // proves the manifest complete against - so the comparison is against every act held here,
   // not the allowed ones.
-  const missing = total === undefined ? 0n : total - BigInt(acts.length);
+  const missing =
+    total === undefined || syncing ? 0n : total - BigInt(acts.length);
 
   return (
     <Panel
@@ -38,7 +42,9 @@ export function ActStream({
       <div className="stream">
         {newestFirst.length === 0 ? (
           <div className="empty">
-            No acts yet. Every attempt this mandate makes - allowed or refused - appears here.
+            {syncing
+              ? "Reading the published act manifest, then the head of the chain."
+              : "No acts yet. Every attempt this mandate makes - allowed or refused - appears here."}
           </div>
         ) : (
           newestFirst.map((act) => {

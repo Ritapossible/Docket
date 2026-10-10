@@ -67,6 +67,8 @@ export interface MandateView {
    * the stream holds what this browser managed to fetch, and this is how many there really are.
    */
   nonce: bigint;
+  /** True on the first paint, while the history walk is still running behind it. */
+  syncing: boolean;
   balance: bigint;
   paused: boolean;
   mode: number;
@@ -129,6 +131,22 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
       const mandate = connection.mandate as Address;
       const head = await client.getBlockNumber({cacheTime: 0});
 
+      // These are one call each and they do not depend on the history, so they are read before
+      // it rather than after. The walk below takes about twelve seconds against a mandate this
+      // old; making the balance, the mode and the act count wait for it meant the page a judge
+      // opens sat empty for all twelve and looked broken rather than busy.
+      const base = {address: mandate, abi: mandateAbi} as const;
+      const [balance, paused, agent, owner, loosenDelay, policy, nonce] = await Promise.all([
+        client.getBalance({address: mandate}),
+        client.readContract({...base, functionName: "paused"}),
+        client.readContract({...base, functionName: "agent"}),
+        client.readContract({...base, functionName: "owner"}),
+        client.readContract({...base, functionName: "loosenDelay"}),
+        client.readContract({...base, functionName: "policy"}),
+        client.readContract({...base, functionName: "nonce"}),
+      ]);
+      const chain = {balance, paused, mode: Number(policy[5]), agent, owner, loosenDelay, nonce};
+
       let previous = sync.current;
 
       if (previous === null) {
@@ -141,10 +159,18 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
             : 0n;
 
         setState({
-          status: "loading",
-          detail: full
-            ? `Reading ${span} blocks from deployment.`
-            : `History is ${span} blocks. Reading the published act manifest.`,
+          status: "ready",
+          view: {
+            ...chain,
+            acts: [],
+            score: null,
+            scoredAtBlock: null,
+            inputHash: null,
+            coversFullHistory: false,
+            syncedFrom: connection.fromBlock,
+            asOfBlock: head,
+            syncing: true,
+          },
         });
 
         // The cheap complete path, when a verifiable manifest covers this mandate.
@@ -243,17 +269,6 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
 
       sync.current = previous;
 
-      const base = {address: mandate, abi: mandateAbi} as const;
-      const [balance, paused, agent, owner, loosenDelay, policy, nonce] = await Promise.all([
-        client.getBalance({address: mandate}),
-        client.readContract({...base, functionName: "paused"}),
-        client.readContract({...base, functionName: "agent"}),
-        client.readContract({...base, functionName: "owner"}),
-        client.readContract({...base, functionName: "loosenDelay"}),
-        client.readContract({...base, functionName: "policy"}),
-        client.readContract({...base, functionName: "nonce"}),
-      ]);
-
       setState({
         status: "ready",
         view: {
@@ -264,13 +279,8 @@ export function useMandate(connection: Connection | null, intervalMs = 2000): St
           coversFullHistory: previous.coversFullHistory,
           syncedFrom: previous.syncedFrom,
           asOfBlock: head,
-          nonce,
-          balance,
-          paused,
-          mode: Number(policy[5]),
-          agent,
-          owner,
-          loosenDelay,
+          syncing: false,
+          ...chain,
         },
       });
     } catch (error) {
