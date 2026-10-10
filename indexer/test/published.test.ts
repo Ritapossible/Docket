@@ -146,6 +146,30 @@ test("_T13_ a published DCS-1 score recomputes from a cold sync", {skip}, async 
           result.inputHash,
           feedbackHash,
         );
+
+        // The feedbackHash binding - the thing that stops a manifest being edited after
+        // publication to point at a different set of logs - only engages when the manifest's
+        // height is this entry's, which is true of exactly one entry. So prove it bites
+        // instead of trusting that it ran: a verifier that quietly skipped the comparison
+        // would pass every other assertion in this file, and the tamper test below canaries
+        // the nonce and inputHash checks but cannot reach this one.
+        if (feedbackHash && BigInt(manifest.asOfBlock) === asOfBlock) {
+          const corrupted = await verifyManifest(
+            client,
+            manifest,
+            asOfBlock,
+            result.acts.map((a) => a.id),
+            result.inputHash,
+            `0x${"de".repeat(32)}`,
+          ).then(
+            () => null,
+            (e: Error) => e,
+          );
+          assert.ok(
+            corrupted instanceof ManifestError,
+            "a manifest whose inputHash disagrees with the on-chain feedbackHash was accepted",
+          );
+        }
       }
 
       const recomputed = computeScore(result.history);
