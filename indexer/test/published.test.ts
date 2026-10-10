@@ -187,8 +187,18 @@ test("_T13_ a tampered manifest is rejected", {skip}, async () => {
   const isolated = blocks.filter((b) => counts.get(windowOf(b)) === 1);
   assert.ok(isolated.length > 0, "no block is alone in its window, cannot tamper meaningfully");
 
-  let caught = 0;
-  for (const dropped of isolated) {
+  // Sample, do not sweep. Each tampered manifest costs a full replay of its blocks, so
+  // dropping every isolated block in turn is quadratic in the mandate's history: at 58 blocks
+  // that was 43 replays and four minutes, and it grows forever. The first and last isolated
+  // blocks are enough, and they are not an arbitrary pair - the earliest is deployment-era
+  // and carries no act, so it can only be caught by the inputHash, while the latest is a
+  // recent act and is caught by the nonce count. One of each mechanism, two replays, flat.
+  const sample = [isolated[0]!, isolated[isolated.length - 1]!].filter(
+    (b, i, a) => a.indexOf(b) === i,
+  );
+
+  const reasons: string[] = [];
+  for (const dropped of sample) {
     const tampered: ActManifest = {
       ...manifest,
       blocks: manifest.blocks.filter((b) => BigInt(b) !== dropped),
@@ -199,20 +209,35 @@ test("_T13_ a tampered manifest is rejected", {skip}, async () => {
       atBlocks: tampered.blocks.map((b) => BigInt(b)),
     });
 
-    await assert.rejects(
-      () =>
-        verifyManifest(
-          client,
-          tampered,
-          asOfBlock,
-          result.acts.map((a) => a.id),
-          result.inputHash,
-        ),
-      (e: Error) => e instanceof ManifestError,
+    const error = await verifyManifest(
+      client,
+      tampered,
+      asOfBlock,
+      result.acts.map((a) => a.id),
+      result.inputHash,
+    ).then(
+      () => null,
+      (e: Error) => e,
+    );
+
+    assert.ok(
+      error instanceof ManifestError,
       `dropping block ${dropped} from the manifest went undetected`,
     );
-    caught++;
+    reasons.push(error.message);
   }
 
-  assert.ok(caught > 0, "nothing was tampered with, so nothing was proved");
+  // Both mechanisms must have fired across the sample. Asserting only that *something* threw
+  // would pass if the nonce check alone caught everything, and the inputHash binding - the
+  // one that notices a dropped policy event - could rot unnoticed behind it.
+  assert.ok(
+    reasons.some((r) => /acts, chain says/.test(r)),
+    `no tampering was caught by the act count: ${reasons.join(" | ")}`,
+  );
+  assert.ok(
+    reasons.some((r) => /inputHash/.test(r)),
+    `no tampering was caught by the inputHash: ${reasons.join(" | ")}`,
+  );
+
+  assert.equal(reasons.length, sample.length, "not every sampled manifest was rejected");
 });
