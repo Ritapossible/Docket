@@ -1,0 +1,116 @@
+[
+ {
+  "id": "p1",
+  "scene": "title",
+  "text": "Docket \u2014 built by Rita for Monad Metropolis",
+  "say": "Docket. Built by Rita, for the Monad Metropolis hackathon."
+ },
+ {
+  "id": "p2",
+  "scene": "problem",
+  "text": "Give an AI agent money and you have a problem with three parts.",
+  "say": "Give an A.I. agent money, and you have a problem with three parts."
+ },
+ {
+  "id": "p3",
+  "scene": "problem",
+  "text": "It can be prompt-injected. Its key can leak. And its judgement is not yours.",
+  "say": "It can be prompt injected. Its key can leak. And its judgement is not yours."
+ },
+ {
+  "id": "p4",
+  "scene": "problem",
+  "text": "So today you either don't give agents money, or you hand one a key and hope.",
+  "say": "So today, you either do not give agents money, or you hand one a key and hope."
+ },
+ {
+  "id": "p5",
+  "scene": "alt",
+  "text": "Every existing answer buys safety with something you must trust.",
+  "say": "Every existing answer buys safety with something you must trust. Hardware, or tens of seconds of proving."
+ },
+ {
+  "id": "p6",
+  "scene": "alt",
+  "text": "They all stop the bad action. None of them leave a record it was attempted.",
+  "say": "They all stop the bad action. None of them leave a record that it was attempted."
+ },
+ {
+  "id": "p7",
+  "scene": "solution",
+  "text": "Docket puts the funds and the policy in a contract. The agent holds neither.",
+  "say": "Docket puts the funds and the policy in a contract called a mandate. The agent holds neither."
+ },
+ {
+  "id": "p8",
+  "scene": "solution",
+  "text": "It may call one function \u2014 so stealing its key gets an attacker nothing it couldn't already do.",
+  "say": "It is granted permission to call one function, so stealing its key gets an attacker nothing the agent could not already do."
+ },
+ {
+  "id": "p9",
+  "scene": "record",
+  "text": "And a policy violation never reverts. It emits Denied and returns false.",
+  "say": "And a policy violation never reverts. It emits denied, and returns false."
+ },
+ {
+  "id": "p10",
+  "scene": "record",
+  "text": "A revert would roll back its own logs \u2014 the refused attempt would vanish.",
+  "say": "A revert would roll back its own logs, and the refused attempt would vanish."
+ },
+ {
+  "id": "p11",
+  "scene": "score",
+  "text": "Those refusals compute a conduct score anyone can recompute and nobody can self-award.",
+  "say": "Those refusals compute a conduct score. One that anyone can recompute, and nobody can award themselves."
+ },
+ {
+  "id": "p12",
+  "scene": "users",
+  "text": "Who is it for? Teams shipping agents that move real value.",
+  "say": "Who is it for? Teams shipping agents that move real value. Treasury automation, trading bots, payment agents."
+ },
+ {
+  "id": "p13",
+  "scene": "users",
+  "text": "They need a bound they can prove, not a prompt they hope holds.",
+  "say": "They need a bound they can prove, not a prompt they hope holds."
+ },
+ {
+  "id": "p14",
+  "scene": "users",
+  "text": "The counterparties on the other side, who can't tell a careful agent from a reckless one.",
+  "say": "The protocols and counterparties on the other side, who today cannot tell a careful agent from a reckless one."
+ },
+ {
+  "id": "p15",
+  "scene": "users",
+  "text": "And agent registries, which need a reputation that is earned rather than claimed.",
+  "say": "And agent registries, which need a reputation that is earned, rather than claimed."
+ },
+ {
+  "id": "p16",
+  "scene": "speed",
+  "text": "The policy check sits inside the agent's action loop, so latency is the product.",
+  "say": "The policy check sits inside the agent's action loop, so latency is the product."
+ },
+ {
+  "id": "p17",
+  "scene": "speed",
+  "text": "568 ms act-to-finality on Monad. A ZK gate buys the same guarantee for 30 to 75 seconds.",
+  "say": "Five hundred and sixty eight milliseconds, act to finality, on Monad testnet. A zero knowledge gate buys the same guarantee for thirty to seventy five seconds."
+ },
+ {
+  "id": "p18",
+  "scene": "close",
+  "text": "Live on Monad testnet since September. Over fifty acts, and a published score.",
+  "say": "Docket has been live on Monad testnet since September. Over fifty acts, and a published score."
+ },
+ {
+  "id": "p19",
+  "scene": "close",
+  "text": "Not a prototype. A deployed contract \u2014 and one command lets anyone check it.",
+  "say": "Not a prototype. A deployed contract. And one command lets anyone check it."
+ }
+]

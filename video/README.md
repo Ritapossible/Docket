@@ -5,11 +5,27 @@ the browser is driven through the live console on a schedule, and the two are cu
 is here so the video can be rebuilt when the site changes, rather than re-recorded by someone
 dragging a mouse for three minutes and hoping.
 
+Two videos come out of it. The **demo** walks the live console for the demo-video slot; the
+**pitch** is the shorter one the submission form caps at two minutes, which is argument rather
+than product, so it is mostly cards and drops to the live site twice to show the thing being
+argued about is deployed.
+
 ```
-node video/build-audio.mjs                       # voice + timings + captions
-node video/record.mjs                            # drive the live site, record 1920x1080
-./video/render.sh video/docket-demo.mp4          # mux and burn the captions
+# demo - 2:56
+node video/build-audio.mjs
+node video/record.mjs
+./video/render.sh video/docket-demo.mp4
+
+# pitch - 1:52
+SCRIPT=pitch GAP_SAME=0.18 GAP_SCENE=0.42 TAIL=1.4 node video/build-audio.mjs
+node video/pitch-record.mjs
+SCRIPT=pitch ./video/render.sh video/docket-pitch.mp4
 ```
+
+`SCRIPT` names the script and everything else follows it: `pitch.json` in, then
+`pitch.timeline.json`, `audio-pitch/`, `pitch.ass`, `out-pitch/`. `LEAD`, `GAP_SAME`,
+`GAP_SCENE` and `TAIL` tune the pacing, which is how the pitch fits a hard two-minute cap
+without the lines being read any faster.
 
 The order matters. **The picture is cut to the voice**, not the other way round:
 `build-audio.mjs` measures every sentence and writes `timeline.json`, and `record.mjs`
@@ -23,7 +39,8 @@ a sentence takes and being wrong on all thirty of them.
 | `narration.json` | the script. `text` is the caption, `say` is what the voice reads |
 | `build-audio.mjs` | runs piper per line, measures it, writes `voice.wav`, `timeline.json`, `subs.ass` |
 | `overlay.js` | injected into the page: the cursor, the zoom, the intro and outro cards |
-| `record.mjs` | the choreography — which element is pointed at, and when |
+| `record.mjs` | the demo choreography — which element is pointed at, and when |
+| `pitch.json`, `pitch-record.mjs` | the two-minute pitch: its script and its slides |
 | `render.sh` | ffmpeg: video + voice + burned captions |
 
 `say` and `text` differ wherever the written form is unspeakable. "ERC-8004" read literally is

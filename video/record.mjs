@@ -5,8 +5,9 @@ import path from "node:path";
 const DIR = path.dirname(new URL(import.meta.url).pathname);
 
 const URL_ = process.env.TARGET ?? "https://docket-beryl.vercel.app/";
-const OUT = path.join(DIR, "out");
-const tl = JSON.parse(fs.readFileSync(path.join(DIR, "timeline.json"), "utf8"));
+const NAME = process.env.SCRIPT ?? "narration";
+const OUT = path.join(DIR, `out-${NAME}`);
+const tl = JSON.parse(fs.readFileSync(path.join(DIR, `${NAME}.timeline.json`), "utf8"));
 const at = Object.fromEntries(tl.segments.map((s) => [s.id, s.start]));
 const TOTAL = tl.total;
 
@@ -23,7 +24,7 @@ const context = await browser.newContext({
   recordVideo: {dir: OUT, size: {width: 1920, height: 1080}},
   reducedMotion: "no-preference",
 });
-await context.addInitScript({path: path.join(DIR, "overlay.js")});
+await context.addInitScript({path: path.join(DIR, process.env.OVERLAY ?? "overlay.js")});
 
 const page = await context.newPage();
 const tCreate = Date.now();
@@ -279,5 +280,5 @@ console.log("done, closing");
 await context.close();
 await browser.close();
 const file = fs.readdirSync(OUT).filter((f) => f.endsWith(".webm")).map((f) => `${OUT}/${f}`);
-fs.writeFileSync(path.join(DIR, "preroll.json"), JSON.stringify({preroll: PREROLL / 1000, file: file[0]}));
+fs.writeFileSync(path.join(DIR, `${NAME}.preroll.json`), JSON.stringify({preroll: PREROLL / 1000, file: file[0]}));
 console.log("video:", file[0], "preroll", PREROLL / 1000);

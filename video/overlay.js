@@ -202,6 +202,40 @@
       card.style.opacity = "1";
       await sleep(ms + 30);
     },
+    /**
+     * Set the card's whole contents at once, with a short fade between slides.
+     *
+     * `intro` and `outro` below are the demo walkthrough's two fixed cards. The pitch is
+     * mostly cards, so it drives this instead: pass what the slide should hold and anything
+     * omitted is hidden rather than left over from the slide before.
+     */
+    async setCard(c, ms = 360) { ready();
+      const wrap = card.querySelector(".wrap");
+      wrap.style.transition = `opacity ${ms}ms ease, transform ${ms}ms ease`;
+      if (c.fade !== false) {
+        wrap.style.opacity = "0";
+        wrap.style.transform = "translateY(12px)";
+        await sleep(ms + 20);
+      }
+      const put = (id, html) => {
+        const e = document.getElementById(id);
+        if (!e) return;
+        if (html === undefined || html === null) { e.style.display = "none"; return; }
+        e.style.display = id === "v-rows" ? "grid" : id === "v-list" ? "block" : "";
+        if (html !== true) e.innerHTML = html;
+        e.classList.add("on");
+      };
+      put("v-mark", true);
+      put("v-eye", c.eyebrow);
+      put("v-h1", c.h1);
+      put("v-sub", c.sub);
+      put("v-list", c.list ? c.list.map((t) => `<li class="vfade on">${t}</li>`).join("") : undefined);
+      put("v-rows", c.rows ? c.rows.map(([k, v]) => `<div><span>${k}</span><span>${v}</span></div>`).join("") : undefined);
+      put("v-cta", c.cta);
+      wrap.style.opacity = "1";
+      wrap.style.transform = "none";
+      await sleep(ms + 20);
+    },
     intro(step) { ready();
       if (step === 0) { show("v-mark"); show("v-eye"); setTimeout(() => show("v-h1"), 260); }
       if (step === 1) { show("v-l1"); }

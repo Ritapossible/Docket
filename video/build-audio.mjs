@@ -15,16 +15,22 @@ import fs from "node:fs";
 import path from "node:path";
 
 const DIR = path.dirname(new URL(import.meta.url).pathname);
-const AUDIO = path.join(DIR, "audio");
 const MODEL = process.env.PIPER_MODEL ?? path.join(DIR, "voices/en_US-lessac-high.onnx");
 
-/** Leading silence, the gap inside a scene, the gap at a scene change, and the tail. */
-const LEAD = 1.0;
-const GAP_SAME = 0.2;
-const GAP_SCENE = 0.5;
-const TAIL = 1.6;
+// Two videos are built from this one script: the demo walkthrough and the shorter pitch.
+// They differ only in their narration and their pacing, so everything is addressed by name.
+const NAME = process.env.SCRIPT ?? "narration";
+const AUDIO = path.join(DIR, `audio-${NAME}`);
+const TIMELINE = path.join(DIR, `${NAME}.timeline.json`);
+const SUBS = path.join(DIR, `${NAME}.ass`);
 
-const script = JSON.parse(fs.readFileSync(path.join(DIR, "narration.json"), "utf8"));
+/** Leading silence, the gap inside a scene, the gap at a scene change, and the tail. */
+const LEAD = Number(process.env.LEAD ?? 1.0);
+const GAP_SAME = Number(process.env.GAP_SAME ?? 0.2);
+const GAP_SCENE = Number(process.env.GAP_SCENE ?? 0.5);
+const TAIL = Number(process.env.TAIL ?? 1.6);
+
+const script = JSON.parse(fs.readFileSync(path.join(DIR, `${NAME}.json`), "utf8"));
 fs.mkdirSync(AUDIO, {recursive: true});
 
 const duration = (file) =>
@@ -54,7 +60,7 @@ script.forEach((seg, i) => {
   if (i < script.length - 1) t += script[i + 1].scene !== seg.scene ? GAP_SCENE : GAP_SAME;
 });
 const total = +(t + TAIL).toFixed(3);
-fs.writeFileSync(path.join(DIR, "timeline.json"), JSON.stringify({total, segments}, null, 1));
+fs.writeFileSync(TIMELINE, JSON.stringify({total, segments}, null, 1));
 
 // Each clip is delayed to its own start and the lot mixed down, rather than concatenated with
 // padding - the gaps are part of the timeline, so they belong in the timings, not in the files.
@@ -98,7 +104,7 @@ segments.forEach((s, n) => {
   ass.push(`Dialogue: 0,${stamp(s.start + PREROLL)},${stamp(end + PREROLL)},Sub,,0,0,0,,` +
            wrap(s.text.replace(/—/g, "-")));
 });
-fs.writeFileSync(path.join(DIR, "subs.ass"), `${ass.join("\n")}\n`);
+fs.writeFileSync(SUBS, `${ass.join("\n")}\n`);
 
 const mmss = `${Math.floor(total / 60)}:${String(Math.floor(total % 60)).padStart(2, "0")}`;
-console.log(`${segments.length} segments, ${total}s (${mmss}) -> audio/voice.wav, timeline.json, subs.ass`);
+console.log(`${segments.length} segments, ${total}s (${mmss}) -> ${path.basename(AUDIO)}/voice.wav, ${path.basename(TIMELINE)}, ${path.basename(SUBS)}`);
