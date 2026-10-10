@@ -263,3 +263,21 @@ computes the score and `feedbackHash` from the same incomplete set produces a se
 lie both checks pass. Only an independent full walk catches that. This is not a regression -
 a lying publisher was always only catchable that way, and DCS-1 §1 has always said the spec,
 not the publisher, is the authority.
+
+### The publisher's own walk still grows
+
+Verification is O(acts) now, but *producing* a manifest is not: the publisher has to walk
+every block to discover which ones belong in the next manifest. Measured on 10 October, at
+fifteen days of mandate age, that walk is 41,800 requests and about 42 minutes, growing by
+roughly 2,810 requests - three minutes - per further day.
+
+The publish job's timeout was set at 45 minutes when the walk took two and a half. On
+10 October it ran for 42, one day away from being cancelled after the score had been
+published but before the manifest was committed, which would have left a registry entry
+pointing at a stale file. The budget is 90 minutes now, which carries it past judging.
+
+The structural fix is an incremental manifest: load the previous one, scan its blocks plus
+only the range added since it was written, and emit the union. That is O(one day) rather than
+O(all history) and would hold indefinitely. It is not built, because it changes the publisher
+the day before a code freeze and the timeout bought enough room without touching the thing
+that currently works.

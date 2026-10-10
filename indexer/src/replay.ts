@@ -38,6 +38,21 @@ export interface ReplayResult {
    */
   coversFullHistory: boolean;
   /**
+   * How the logs were gathered.
+   *
+   * `"full-range"` examined every block between `fromBlock` and `asOfBlock`, so the log set
+   * is complete by construction. `"block-list"` examined only the blocks the caller named,
+   * which is orders of magnitude cheaper and complete only if that list was - a property
+   * this function cannot check and does not claim.
+   *
+   * `coversFullHistory` answers a narrower question than its name suggests: whether the scan
+   * *began* at deployment. Those two were conflated, so a caller handed an incomplete block
+   * list would have received `coversFullHistory: true` and scored it, which is precisely the
+   * confidently-wrong number the flag exists to prevent. Anything presenting a score from a
+   * `"block-list"` scan must first discharge `verifyManifest`.
+   */
+  scannedVia: "full-range" | "block-list";
+  /**
    * Every block that carried a log from this mandate, ascending. This is what makes a cheap
    * re-verification possible: a later verifier can fetch these blocks directly instead of
    * walking the whole chain, and prove the list complete against `nonce` (see `manifest.ts`).
@@ -245,6 +260,7 @@ export async function replay(
     acts,
     fromBlock,
     coversFullHistory: options.windowed !== true,
+    scannedVia: options.atBlocks ? "block-list" : "full-range",
     actBlocks: blockNumbers.slice().sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
     history: {
       allowedActs,

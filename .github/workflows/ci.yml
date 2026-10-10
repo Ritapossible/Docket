@@ -65,6 +65,11 @@ jobs:
         working-directory: sdk
         run: npm install --no-audit --no-fund && npx tsc -p tsconfig.json --noEmit
 
+      # act() must never report success for a transaction that reverted or recorded nothing.
+      # That is the whole reason this SDK exists, and it was wrong until 10 October.
+      - name: SDK behaviour
+        run: npm run test:sdk
+
   indexer:
     runs-on: ubuntu-latest
     timeout-minutes: 20

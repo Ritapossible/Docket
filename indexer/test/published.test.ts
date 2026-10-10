@@ -129,6 +129,11 @@ test("_T13_ a published DCS-1 score recomputes from a cold sync", {skip}, async 
         atBlocks,
       });
       assert.ok(result.coversFullHistory, "replay did not cover the full history");
+      assert.equal(
+        result.scannedVia,
+        manifest ? "block-list" : "full-range",
+        "the scan did not take the path the manifest's presence implies",
+      );
 
       // Prove the shortcut before relying on what it produced. If the manifest omitted an act
       // the ids have a hole in them, or there are fewer of them than the chain's own nonce.

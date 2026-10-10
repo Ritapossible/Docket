@@ -1,0 +1,44 @@
+name: verify full
+
+# The expensive half of the T13 check, on its own schedule and its own budget.
+#
+# The daily publish verifies through the manifest, which costs one request per act. That is
+# the path a judge will take and it is fast. But a cheap check never compared against the
+# expensive one is a cheap check you are trusting, so once a week this walks every block
+# between deployment and the scored height and asserts the two agree.
+#
+# It is a separate workflow because it cannot share the publish job's budget: that job
+# already spends most of its 45 minutes producing the score, and the full walk costs the
+# same again. Previously it was a step there, guarded so it only ran on Sundays, and it
+# could never have completed - the job timeout would have cancelled it every time.
+
+on:
+  schedule:
+    - cron: "23 4 * * 0" # Sundays, well clear of the daily publish at 06:41
+  workflow_dispatch:
+
+concurrency:
+  group: verify-full
+  cancel-in-progress: false
+
+jobs:
+  full:
+    runs-on: ubuntu-latest
+    # The walk is one request per 100 blocks of chain and grows with the mandate's age. When
+    # this starts timing out, that is the signal that the manifest path has become the only
+    # affordable one - which is worth knowing loudly rather than discovering at judging.
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Walk every block and confirm the published scores
+        env:
+          DOCKET_FULL_REPLAY: "1"
+        run: npm run test:published

@@ -11,7 +11,8 @@
     "test:dcs1": "node --experimental-strip-types --test indexer/test/dcs1.test.ts",
     "console:build": "npm --prefix console run build",
     "console:e2e": "./console/scripts/e2e.sh",
-    "test:published": "node --experimental-strip-types --test indexer/test/published.test.ts"
+    "test:published": "node --experimental-strip-types --test indexer/test/published.test.ts",
+    "test:sdk": "node --experimental-strip-types --test sdk/test/act.test.ts"
   },
   "dependencies": {
     "viem": "^2.21.0"

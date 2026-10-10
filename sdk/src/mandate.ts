@@ -8,7 +8,14 @@ import {
 } from "viem";
 
 import {mandateAbi} from "./abi.ts";
-import {DeniedError, TargetFailedError, toRule, type Rule} from "./errors.ts";
+import {
+  ActRevertedError,
+  DeniedError,
+  NoRecordError,
+  TargetFailedError,
+  toRule,
+  type Rule,
+} from "./errors.ts";
 
 export interface Outflow {
   asset: Address;
@@ -33,7 +40,15 @@ export interface ActionInput {
 
 export interface ActResult {
   txHash: Hex;
-  /** Data returned by the target call. */
+  /**
+   * What the target call returned, taken from the pre-flight simulation.
+   *
+   * It comes from the simulation and not from the receipt because the `Allowed` event does
+   * not carry return data - only `Failed` does - so there is nowhere on chain to read it
+   * back from. In the ordinary case the simulated and executed states are the same and so is
+   * this value; if the target's output depends on state that moved between simulating and
+   * mining, it will differ. Do not treat it as a receipt.
+   */
   returnData: Hex;
 }
 
@@ -109,16 +124,26 @@ export async function act(
   const account = options.account ?? clients.wallet.account;
   if (!account) throw new Error("act() requires an account on the wallet client");
 
-  const {request} = await clients.public.simulateContract({
+  const {request, result} = await clients.public.simulateContract({
     address: mandate,
     abi: mandateAbi,
     functionName: "act",
     args: [action],
     account,
   });
+  const simulated = (result as readonly [boolean, Hex] | undefined)?.[1] ?? "0x";
 
   const txHash = await clients.wallet.writeContract(request);
   const receipt = await clients.public.waitForTransactionReceipt({hash: txHash});
+
+  // A refusal does not revert, so the receipt status says nothing about the policy decision.
+  // It does say whether the mandate ran at all, and this function used to skip it entirely:
+  // a reverted act - out of gas, most often - produced no logs, fell through the loop below
+  // and was returned as success. That is precisely the failure this SDK exists to prevent,
+  // one layer up from the one it was written to catch.
+  if (receipt.status !== "success") throw new ActRevertedError({txHash});
+
+  let allowed = false;
 
   for (const log of receipt.logs) {
     if (log.address.toLowerCase() !== mandate.toLowerCase()) continue;
@@ -144,7 +169,16 @@ export async function act(
       const args = decoded.args as unknown as {target: Address; returnData: Hex};
       throw new TargetFailedError({target: args.target, txHash, returnData: args.returnData});
     }
+
+    // Observe-mode acts emit WouldDeny and then execute, so they are allowed outcomes and
+    // reach Allowed too. Only Allowed proves the action ran.
+    if (decoded.eventName === "Allowed") allowed = true;
   }
 
-  return {txHash, returnData: "0x"};
+  // Every act emits exactly one of Allowed, Denied, WouldDeny or Failed. Reaching here means
+  // the transaction succeeded and the mandate said nothing, which should be impossible -
+  // returning success on no evidence is the one outcome this SDK must never produce.
+  if (!allowed) throw new NoRecordError({txHash});
+
+  return {txHash, returnData: simulated};
 }

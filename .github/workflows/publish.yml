@@ -30,10 +30,17 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Generous because of the Sunday full walk, which is one request per 100 blocks of chain
-    # and grows. continue-on-error keeps it from blocking the daily publish, but only the job
-    # timeout keeps it from burning an hour of runner for nothing.
-    timeout-minutes: 45
+    # The publisher cannot use a manifest to shorten its own work: it has to walk every block
+    # to discover which ones to put in the next one. So this job's cost is one request per 100
+    # blocks of chain and grows by roughly three minutes per day of mandate age. It was 2.5
+    # minutes when the budget was set at 45, and 42 by 10 October - one run away from being
+    # cancelled after publishing but before committing the manifest, which would have left a
+    # score pointing at a stale file.
+    #
+    # 90 carries it past judging. The real fix is an incremental manifest: scan the previous
+    # manifest's blocks plus only the range added since, which is O(one day) instead of
+    # O(all history). Noted in bench/RESULTS.md rather than attempted the day before a freeze.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -85,15 +92,11 @@ jobs:
         run: npm run test:published
 
       - name: Verify again the expensive way, Sundays
-        # A cheap check that is never compared against the expensive one is a cheap check you
-        # are trusting. Once a week, walk every block and confirm the two agree. This is the
-        # step that will start timing out as the chain grows, and that is deliberate: it should
-        # fail loudly rather than silently stop being run.
-        if: github.event_name == 'schedule'
-        continue-on-error: true
-        run: |
-          if [ "$(date -u +%u)" != "7" ]; then
-            echo "not Sunday, skipping the full walk"
-            exit 0
-          fi
-          DOCKET_FULL_REPLAY=1 npm run test:published
+        # Deliberately NOT in this job. The daily publish already spends ~42 minutes walking
+        # the chain, and the full re-walk costs the same again, so running both inside one
+        # 45 minute job meant the cross-check could never finish - the job timeout would
+        # cancel it every Sunday, after the publish had already succeeded. A check that is
+        # structurally incapable of completing is worse than no check, because the red run
+        # looks like a known flake. It lives in verify-full.yml with its own budget.
+        if: false
+        run: echo "moved to .github/workflows/verify-full.yml"

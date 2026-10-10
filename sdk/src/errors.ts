@@ -97,3 +97,52 @@ export class TargetFailedError extends Error {
     this.txHash = args.txHash;
   }
 }
+
+/**
+ * Thrown when the `act` transaction itself reverted, so nothing was recorded.
+ *
+ * This is the counterpart to `DeniedError` and the two must not be confused. A refusal does
+ * NOT revert (invariant I2), so a revert is never a policy decision - it means the
+ * transaction died before the mandate could decide anything, most often by running out of
+ * gas. No `Denied` event exists, the nonce did not advance, and the attempt left no trace.
+ *
+ * It has its own class because the correct response differs: a `DeniedError` means stop and
+ * reconsider the action, while this means retry it.
+ */
+export class ActRevertedError extends Error {
+  readonly txHash: Hex;
+
+  constructor(args: {txHash: Hex}) {
+    super(
+      `The act transaction reverted, so nothing was recorded (tx ${args.txHash}). ` +
+        `A policy refusal does not revert, so this is not a refusal - the transaction failed ` +
+        `before the mandate decided anything, usually out of gas. Nothing was spent and the ` +
+        `attempt is not on the record. Retrying is safe.`,
+    );
+    this.name = "ActRevertedError";
+    this.txHash = args.txHash;
+  }
+}
+
+/**
+ * Thrown when the transaction succeeded but the mandate emitted no act event at all.
+ *
+ * Every `act` emits exactly one of `Allowed`, `Denied`, `WouldDeny` or `Failed`, so this
+ * should be unreachable. It exists because the alternative - returning success - would mean
+ * reporting that an action happened when there is no evidence it did, and in a project whose
+ * entire claim is that the record is the truth, silently inventing one is the worst available
+ * failure mode.
+ */
+export class NoRecordError extends Error {
+  readonly txHash: Hex;
+
+  constructor(args: {txHash: Hex}) {
+    super(
+      `The act transaction succeeded but the mandate emitted no event (tx ${args.txHash}). ` +
+        `Treat the outcome as unknown and read the mandate's state directly; do not assume ` +
+        `the action executed.`,
+    );
+    this.name = "NoRecordError";
+    this.txHash = args.txHash;
+  }
+}
