@@ -1,0 +1,182 @@
+[
+ {
+  "id": "i1",
+  "scene": "intro",
+  "text": "Give an AI agent money and you have a problem with three parts.",
+  "say": "Give an A.I. agent money, and you have a problem with three parts."
+ },
+ {
+  "id": "i2",
+  "scene": "intro",
+  "text": "It can be prompt-injected. Its key can leak. And its judgement is not yours.",
+  "say": "It can be prompt injected. Its key can leak. And its judgement is not yours."
+ },
+ {
+  "id": "i3",
+  "scene": "intro",
+  "text": "Every existing answer buys safety with something you must trust: hardware, or seconds of proving.",
+  "say": "Every existing answer buys safety with something you must trust. Hardware, or tens of seconds of proving."
+ },
+ {
+  "id": "i4",
+  "scene": "intro",
+  "text": "Docket stops asking whether the agent is trustworthy.",
+  "say": "Docket stops asking whether the agent is trustworthy."
+ },
+ {
+  "id": "i5",
+  "scene": "intro",
+  "text": "It records what a contract actually let it do. Live, on Monad testnet.",
+  "say": "It records what a contract actually let it do. Live, on Monad testnet."
+ },
+ {
+  "id": "h1",
+  "scene": "hero",
+  "text": "This is the live console. No wallet, no signing \u2014 it reads public chain state.",
+  "say": "This is the live console. No wallet, and nothing to sign. It reads public chain state."
+ },
+ {
+  "id": "h2",
+  "scene": "hero",
+  "text": "A mandate holds the funds and the policy. The agent holds neither.",
+  "say": "A mandate holds the funds and the policy. The agent holds neither."
+ },
+ {
+  "id": "h3",
+  "scene": "hero",
+  "text": "It is granted permission to call one function \u2014 so stealing its key gets an attacker nothing it could not already do.",
+  "say": "It is granted permission to call one function. So stealing that key gets an attacker nothing the agent could not already do."
+ },
+ {
+  "id": "s1",
+  "scene": "stats",
+  "text": "A real deployed mandate, holding just under one MON, in ENFORCE mode.",
+  "say": "A real deployed mandate, holding just under one mon, in enforce mode."
+ },
+ {
+  "id": "s2",
+  "scene": "stats",
+  "text": "53 acts recorded \u2014 read from the contract's own nonce, not from anything this page chose to count.",
+  "say": "Fifty three acts recorded. That is read from the contract's own nonce, not from anything this page chose to count."
+ },
+ {
+  "id": "a1",
+  "scene": "stream",
+  "text": "Every attempt the agent has made, each a permanent public record with its block number.",
+  "say": "Every attempt the agent has made. Each one a permanent public record, with its block number."
+ },
+ {
+  "id": "a2",
+  "scene": "stream",
+  "text": "A full walk is 42,000 requests. This reads a published manifest of act-bearing blocks instead.",
+  "say": "Walking the chain for these is forty two thousand requests. This reads a published manifest of act bearing blocks instead."
+ },
+ {
+  "id": "a3",
+  "scene": "stream",
+  "text": "And it proves that list complete against the chain's nonce before showing you a single row.",
+  "say": "And it proves that list complete against the chain's own nonce before it shows you a single row."
+ },
+ {
+  "id": "d1",
+  "scene": "score",
+  "text": "The conduct score. 424 out of 1000.",
+  "say": "The conduct score. Four hundred and twenty four, out of one thousand."
+ },
+ {
+  "id": "d2",
+  "scene": "score",
+  "text": "Computed in your browser from the mandate's own event log.",
+  "say": "Computed in your browser, from the mandate's own event log."
+ },
+ {
+  "id": "d3",
+  "scene": "score",
+  "text": "It matches the number published to the ERC-8004 registry \u2014 posted by an address that owns nothing.",
+  "say": "And it matches the number published to the E.R.C. eight thousand and four reputation registry. Posted by an address that owns nothing."
+ },
+ {
+  "id": "d4",
+  "scene": "score",
+  "text": "The registry refuses feedback from the agent's own owner. This score could not have been self-awarded.",
+  "say": "The registry refuses feedback from the agent's own owner. So this score could not have been self awarded."
+ },
+ {
+  "id": "c1",
+  "scene": "dcs1",
+  "text": "The spec is public and deterministic. No floating point anywhere.",
+  "say": "The scoring spec is public and deterministic. No floating point, anywhere."
+ },
+ {
+  "id": "c2",
+  "scene": "dcs1",
+  "text": "Every quantity is an integer in parts per million, so anyone reproduces it byte-identically, in any language.",
+  "say": "Every quantity is an integer in parts per million, so a third party reproduces the number byte identically, in any language."
+ },
+ {
+  "id": "c3",
+  "scene": "dcs1",
+  "text": "Four terms move it: experience, age, authority, and breach.",
+  "say": "Four terms move it. Experience, age, authority, and breach."
+ },
+ {
+  "id": "c4",
+  "scene": "dcs1",
+  "text": "Every refusal is a penalty that halves every thirty days. Age saturates at 180 \u2014 it cannot be bought.",
+  "say": "Every refusal is a penalty that halves every thirty days. And age saturates at one hundred and eighty days. It cannot be bought."
+ },
+ {
+  "id": "r1",
+  "scene": "arch",
+  "text": "Six invariants define the project.",
+  "say": "Six invariants define the project."
+ },
+ {
+  "id": "r2",
+  "scene": "arch",
+  "text": "The one that matters most: a policy violation never reverts.",
+  "say": "The one that matters most. A policy violation never reverts."
+ },
+ {
+  "id": "r3",
+  "scene": "arch",
+  "text": "It emits Denied and returns false. A revert would roll back its own logs \u2014 the refused attempt would vanish.",
+  "say": "It emits denied, and returns false. A revert would roll back its own logs, so the refused attempt, the artifact the whole system rests on, would vanish."
+ },
+ {
+  "id": "r4",
+  "scene": "bench",
+  "text": "The cost of a policy check, measured on testnet: 568 milliseconds, act to finality.",
+  "say": "And the cost of a policy check, measured on testnet rather than argued: five hundred and sixty eight milliseconds, act to finality."
+ },
+ {
+  "id": "r5",
+  "scene": "bench",
+  "text": "A zero-knowledge gate buys the same guarantee for 30 to 75 seconds. This one is a pause.",
+  "say": "A zero knowledge gate buys the same guarantee for thirty to seventy five seconds. This one is a pause."
+ },
+ {
+  "id": "t1",
+  "scene": "threat",
+  "text": "And the threat model says what this does not protect you from.",
+  "say": "And the threat model says what this does not protect you from."
+ },
+ {
+  "id": "t2",
+  "scene": "threat",
+  "text": "Fourteen rows \u2014 including that on this deployment the guardian and the owner are the same key.",
+  "say": "Fourteen rows. Including the admission that on this deployment, the guardian and the owner are the same key."
+ },
+ {
+  "id": "o1",
+  "scene": "outro",
+  "text": "Open the console. Read the spec. Recompute the score yourself.",
+  "say": "Open the console. Read the spec. Recompute the score yourself."
+ },
+ {
+  "id": "o2",
+  "scene": "outro",
+  "text": "Docket \u2014 an AI agent's reputation, computed from what a contract actually let it do.",
+  "say": "Docket. An A.I. agent's reputation, computed from what a contract actually let it do."
+ }
+]
