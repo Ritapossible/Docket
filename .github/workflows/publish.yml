@@ -43,13 +43,20 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          # A rebase needs history. The default shallow checkout is enough to commit but not
+          # reliably enough to rebase onto a moved main.
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
+      # ci, not install. `npm install` rewrites package-lock.json, which left the working tree
+      # dirty and made `git pull --rebase` refuse with "You have unstaged changes" - after the
+      # score had already been published. See the commit step below.
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Publish
         id: publish
@@ -67,20 +74,44 @@ jobs:
         # Before the verification step, not after: the verifier fetches the manifest over HTTP
         # from the default branch, so a manifest still sitting in the runner's working tree is
         # a manifest the verifier cannot see.
+        #
+        # On 10 October this step failed and took the manifest with it. The score went on chain
+        # (424 at block 69761422), the commit was made locally, and then `git pull --rebase`
+        # refused because npm install had rewritten package-lock.json. The runner was torn down
+        # and the registry entry was left pointing at a three-week-old manifest - the single
+        # worst outcome this job has, because the published score looks fine and only the
+        # verification path is broken.
+        #
+        # Three changes so it cannot recur: npm ci above leaves the tree clean, autostash
+        # survives it if something else dirties the tree anyway, and the push is attempted
+        # before any rebase so the common case never needs one.
         run: |
+          set -euo pipefail
+
           if git diff --quiet -- console/public/dcs1-manifest.json; then
             echo "manifest unchanged"
             exit 0
           fi
+
           git config user.name  "docket-publisher"
           git config user.email "noreply@anthropic.com"
           git add console/public/dcs1-manifest.json
           git commit \
             -m "Publish DCS-1 manifest" \
             -m "Written by .github/workflows/publish.yml alongside the on-chain score. The feedbackURI of the registry entry points at this file, and a verifier proves it complete against the mandate's nonce before trusting any block in it."
-          # The scheduled agent may have pushed while this ran.
-          git pull --rebase origin main
-          git push origin HEAD:main
+
+          # Try the straightforward push first. Only reconcile if main actually moved.
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "pushed on attempt ${attempt}"
+              exit 0
+            fi
+            echo "push rejected, reconciling with main (attempt ${attempt})"
+            git -c rebase.autoStash=true pull --rebase origin main
+          done
+
+          echo "could not push the manifest after three attempts"
+          exit 1
 
       - name: Verify the published score recomputes
         # The point of publishing is that anyone can check it. Checking it ourselves, from a

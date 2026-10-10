@@ -109,7 +109,13 @@ jobs:
   # contract regression buried in another job's log.
   published:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Normally seconds, because it verifies through the manifest. But whenever a score is
+    # published and its manifest has not landed yet - which happened on 10 October when the
+    # commit step failed after the publish succeeded - the newest entry is not covered and the
+    # verifier correctly falls back to walking every block. That is ~42 minutes and climbing.
+    # The budget has to survive that window, or a recoverable gap in the manifest turns into a
+    # red build that looks like a broken verifier.
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
