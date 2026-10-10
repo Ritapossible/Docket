@@ -6,12 +6,16 @@ Monad *Metropolis* hackathon, **Trust, Identity & AI Infrastructure**.
 
 | | |
 | --- | --- |
+| **Live console** | **https://docket-beryl.vercel.app** |
 | Repository | https://github.com/Ritapossible/docket |
 | Network | Monad testnet, chain id 10143 |
 | Showcase mandate | [`0x2EC195646731F274c0e500f3B671C04189446Ae9`](https://testnet.monadexplorer.com/address/0x2EC195646731F274c0e500f3B671C04189446Ae9) |
 | ERC-8004 identity | agentId **1930** on [`0x8004A818…D9e`](https://testnet.monadexplorer.com/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
 | Published score | [`0x8004B663…713`](https://testnet.monadexplorer.com/address/0x8004B663056A597Dffe9eCcC1965A193B7388713), tagged `docket:dcs-1` |
 | Verify it yourself | `npm run test:published` |
+
+The console opens on the live mandate with no query string and no wallet: it reads public
+chain state, so there is nothing to connect and nothing to sign.
 
 ---
 
