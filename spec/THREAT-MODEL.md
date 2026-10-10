@@ -49,6 +49,50 @@ Two structural facts back the row up, neither of which is a test:
   honest indexers should agree; a disagreement means one has a bug, and `inputHash` says which
   logs to look at.
 
+### The manifest, and the part of T13 it does not reach
+
+"Anyone can recompute this" was true in principle and getting less true every day. A full
+replay costs one `eth_getLogs` per 100 blocks, because 100 is the largest range Monad's public
+RPC will answer - checked against all three public endpoints. The cost tracks how long the
+mandate has existed, not how much it did: about 2,810 requests per day of age whether the agent
+acted three times or not at all. By mid-October a cold verification was a 42-minute walk, which
+is the kind of number that makes a defence theoretical.
+
+So the publisher, which has to walk the history anyway, also publishes the list of blocks that
+carried a log (`console/public/dcs1-manifest.json`). A verifier fetches only those - one request
+per act instead of one per 100 blocks of chain. Verification went from 42 minutes to 20 seconds
+and stopped growing with the calendar.
+
+The obvious objection is that this trusts the publisher to list every act, and it does not:
+
+- Every act event carries `id`, the mandate's `nonce` after `++`, so the ids recovered from a
+  manifest must be exactly 1..N with no gaps. Dropping one from the middle leaves a hole.
+- Dropping acts from the *end* leaves no hole, so N is checked against `nonce()` read from the
+  chain at the score's pinned height - a number the publisher cannot influence.
+- The recomputed `inputHash` is checked against the `feedbackHash` on the registry entry, so a
+  manifest cannot be edited after publication to point at a different set of logs than the
+  score was computed from.
+
+**What it does not prove, stated precisely.** `nonce` counts acts. It does not count policy
+changes, and `Tightened` events feed DCS-1's authority term. A publisher who omits a
+policy-change block from the manifest *and* computes the published score and `feedbackHash` from
+that same incomplete set produces a self-consistent lie that all three checks above pass.
+Catching it needs a walk of every block, which `DOCKET_FULL_REPLAY=1` does and which
+`.github/workflows/verify-full.yml` runs weekly.
+
+That is not a regression in T13: a lying publisher was only ever catchable by an independent
+full replay, and DCS-1 §1 has always said the spec is the authority, not the publisher. What the
+manifest adds is that the cheap path cannot be made to *disagree* with the expensive one by
+tampering alone. A manifest is a hint about where to look, never a claim about what happened.
+
+All three checks are canaried, because a check that has never been seen to fail is decoration.
+Dropping a block that is alone in its 100-block window trips the act count; dropping a
+deployment-era block that carries no act trips the `inputHash`; and stubbing out the
+`feedbackHash` comparison fails the cold-sync test on exactly that assertion. The isolation
+condition is load-bearing - an earlier version of the first canary dropped a block that shared a
+window with three others, the window was fetched regardless, the logs came back, and the test
+proved nothing while passing.
+
 ## Notes on the partial rows
 
 **T5.** The balance assertion caps what a counterparty can take at the declared outflow plus
