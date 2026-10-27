@@ -3,8 +3,8 @@
   "mandate": "0x2EC195646731F274c0e500f3B671C04189446Ae9",
   "chainId": 10143,
   "deployBlock": "65577709",
-  "asOfBlock": "74393197",
-  "nonce": "99",
+  "asOfBlock": "74666342",
+  "nonce": "102",
   "blocks": [
     "65577709",
     "65577716",
@@ -110,9 +110,12 @@
     "74004932",
     "74105179",
     "74174442",
-    "74289572"
+    "74289572",
+    "74413397",
+    "74482378",
+    "74577214"
   ],
-  "inputHash": "0x4fe0131958ba83b6be339eb1e36a74fb4dfde2222753d08e87ed71026f0434c3",
-  "publishBlock": "74407800",
-  "publishTx": "0xe9240127bdbdaaa006dc82e4b21dc64be15076d87fcdc9071fa1c887209f453e"
+  "inputHash": "0xb194c10e09f9140b8c2f8aa550de54efb1f2331101095801f1fee00a4a3eadf5",
+  "publishBlock": "74682617",
+  "publishTx": "0x0b2db062f0d30a100dbfaf2af15e1ffc53386a17e7673438f248fb8d9f23af9d"
 }
